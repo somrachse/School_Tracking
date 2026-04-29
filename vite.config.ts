@@ -5,5 +5,5 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/School_Tracking/', // Use '/' if using schooltracking.online, or '/School_Tracking/' for the github.io link
+  base: '/', // Use '/' if using schooltracking.online, or '/School_Tracking/' for the github.io link
 })
