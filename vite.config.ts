@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  base: '/', 
+  plugins: [react(), tailwindcss()],
+  base: '/School_Tracking/', // Use '/' if using schooltracking.online, or '/School_Tracking/' for the github.io link
 })
