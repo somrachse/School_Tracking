@@ -1,17 +1,34 @@
+require('dotenv').config(); 
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'Somrach123',
-    database: 'school_pack_tracker'
+    host: process.env.DB_HOST,
+    port: 4000, // TiDB Cloud always uses 4000
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+    connectTimeout: 10000, // Wait 10 seconds before giving up
+    ssl: {
+        rejectUnauthorized: false // This bypasses the certificate chain error
+    }
 });
+
+db.connect((err) => {
+    if (err) {
+        console.error('❌ Connection Error:', err.code, err.message);
+    } else {
+        console.log('✅ Connected to TiDB Cloud!');
+    }
+});
+
+// --- KEEP ALL YOUR APP.GET / APP.POST FUNCTIONS BELOW THIS LINE ---
 
 const query = (sql, params = []) =>
     new Promise((resolve, reject) => {
@@ -20,6 +37,22 @@ const query = (sql, params = []) =>
             else resolve(result);
         });
     });
+
+// ... (Rest of your student logic functions here)
+// const db = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: 'Somrach123',
+//     database: 'school_pack_tracker'
+// });
+
+// const query = (sql, params = []) =>
+//     new Promise((resolve, reject) => {
+//         db.query(sql, params, (err, result) => {
+//             if (err) reject(err);
+//             else resolve(result);
+//         });
+//     });
 
 const parsePackHistory = (value, fallbackYear) => {
     if (Array.isArray(value)) return value;
