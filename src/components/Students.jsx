@@ -152,7 +152,7 @@ export default function Students({ onViewDetail }) {
       search &&
       !s.name.toLowerCase().includes(search.toLowerCase()) &&
       !(s.phone || '').includes(search) &&
-      !(s.studentCode || formatStudentCode(s.id)).toLowerCase().includes(search.toLowerCase())
+      !(s.student_id || formatStudentCode(s.id)).toLowerCase().includes(search.toLowerCase())
     ) return false;
     if (filterChurch && s.church !== filterChurch) return false;
     if (filterLvl && getLevel(s.grade) !== filterLvl) return false;
@@ -213,7 +213,7 @@ export default function Students({ onViewDetail }) {
         'Status',
       ],
       ...filtered.map((student) => [
-        student.student_id || student.student_id || formatStudentCode(student.id), // Student ID from DB or fallback
+        student.student_id || formatStudentCode(student.id), // Prefer backend student_id, then formatted id
         student.name || '',
         student.dob || '',
         student.gender || '',
@@ -554,7 +554,7 @@ export default function Students({ onViewDetail }) {
                 <div className="student-photo">{s.photo ? <img src={s.photo} alt="" /> : <i className="fas fa-user"></i>}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.4px' }}>
-                    {s.studentCode || formatStudentCode(s.id)}
+                    {s.student_id || formatStudentCode(s.id)}
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
                   <div style={{ fontSize: '12px', color: 'var(--fg3)', marginTop: '2px' }}>Grade {s.grade} · {s.school} · Age {age}</div>

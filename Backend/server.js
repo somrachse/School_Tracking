@@ -10,13 +10,14 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
-    port: 4000, // TiDB Cloud always uses 4000
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 4000, // TiDB Cloud always uses 4000
     user: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     connectTimeout: 10000, // Wait 10 seconds before giving up
     ssl: {
-        rejectUnauthorized: false // This bypasses the certificate chain error
+        ca: fs.readFileSync(path.join(__dirname, process.env.DB_CA_PATH)),
+        rejectUnauthorized: true
     }
 });
 
