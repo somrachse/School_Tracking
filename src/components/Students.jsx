@@ -167,7 +167,13 @@ export default function Students({ onViewDetail }) {
   });
 
   const downloadFile = (content, filename, type) => {
-    const blob = new Blob([content], { type });
+    let payload = content;
+    // Ensure CSVs have a UTF-8 BOM so Excel on Windows detects UTF-8 encoding
+    if (typeof payload === 'string' && ((type || '').toLowerCase().includes('csv') || (filename || '').toLowerCase().endsWith('.csv'))) {
+      payload = '\uFEFF' + payload;
+    }
+
+    const blob = new Blob([payload], { type });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -545,32 +551,67 @@ export default function Students({ onViewDetail }) {
       </div>
 
       <div className="card" style={{ padding: '8px' }}>
-        {filtered.length === 0 ? <div className="empty-state"><i className="fas fa-search"></i><p>No students match your filters</p></div> : 
-          filtered.map(s => {
-            const age = calcAge(s.dob);
-            const st = packStatus(s);
-            return (
-              <div key={s.id} className="student-card" onClick={() => onViewDetail(s.id)}>
-                <div className="student-photo">{s.photo ? <img src={s.photo} alt="" /> : <i className="fas fa-user"></i>}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.4px' }}>
-                    {s.student_id || formatStudentCode(s.id)}
+        {filtered.length === 0 ? (
+          <div className="empty-state"><i className="fas fa-search"></i><p>No students match your filters</p></div>
+        ) : (
+          <div className="students-table">
+            <div className="student-header">
+              <div className="student-col student-id">Student ID</div>
+              <div className="student-col student-name">Full Name</div>
+              <div className="student-col student-gender">Gender</div>
+              <div className="student-col student-age">Age</div>
+              <div className="student-col student-grade">Grade</div>
+              <div className="student-col student-status">Status</div>
+              <div className="student-col student-actions" aria-hidden="true"></div>
+            </div>
+
+            {filtered.map((s) => {
+              const age = calcAge(s.dob);
+              const st = packStatus(s);
+              return (
+                <div key={s.id} className="student-row" onClick={() => onViewDetail(s.id)}>
+                  <div className="student-col student-id">{s.student_id || formatStudentCode(s.id)}</div>
+
+                  <div className="student-col student-name" style={{ display: 'flex', alignItems: 'center' }}>
+                    <div className="student-photo">{s.photo ? <img src={s.photo} alt="" /> : <i className="fas fa-user"></i>}</div>
+                    <div style={{ marginLeft: '10px', minWidth: 0 }}>
+                      <div style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--fg3)', marginTop: '2px' }}>{s.church || ''}</div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--fg3)', marginTop: '2px' }}>Grade {s.grade} · {s.school} · Age {age}</div>
+
+                  <div className="student-col student-gender">{s.gender || '-'}</div>
+
+                  <div className="student-col student-age">{age}</div>
+
+                  <div className="student-col student-grade">{s.grade || '-'}</div>
+
+                  <div className="student-col student-status">
+                    <button
+                      type="button"
+                      className={`badge ${st === 'complete' ? 'badge-success' : st === 'partial' ? 'badge-warn' : 'badge-info'}`}
+                      style={{ border: 'none', cursor: 'pointer' }}
+                      onClick={(event) => handleToggleStatus(event, s)}
+                    >
+                      {st === 'complete' ? 'Complete' : st === 'partial' ? 'Partial' : 'Pending'}
+                    </button>
+                  </div>
+
+                  <div className="student-col student-actions">
+                    <button
+                      type="button"
+                      className="btn btn-icon"
+                      onClick={(e) => { e.stopPropagation(); }}
+                      aria-label="Actions"
+                    >
+                      <i className="fas fa-ellipsis-v"></i>
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  className={`badge ${st==='complete'?'badge-success':st==='partial'?'badge-warn':'badge-info'}`}
-                  style={{ border: 'none', cursor: 'pointer' }}
-                  onClick={(event) => handleToggleStatus(event, s)}
-                >
-                  {st==='complete'?'Complete':st==='partial'?'Partial':'Pending'}
-                </button>
-              </div>
-            );
-          })
-        }
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

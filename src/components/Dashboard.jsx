@@ -7,10 +7,9 @@ export default function Dashboard() {
   const girls = students.filter(s => s.gender === 'Female').length;
   const primary = students.filter(s => getLevel(s.grade) === 'primary').length;
   const high = students.filter(s => getLevel(s.grade) === 'high').length;
-  const avgAge = total > 0 ? (students.reduce((a, s) => a + calcAge(s.dob), 0) / total).toFixed(1) : '—';
   const comp = completeDistributions(students);
   const dist = totalDistributions(students);
-  const remaining = Math.max(0, settings.stock - comp);
+  
 
   // Church breakdown instead of ministry
   const churchCounts = {};
@@ -19,22 +18,76 @@ export default function Dashboard() {
 
   const recent = [...students].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 5);
 
+  // Distribution trends (Target vs Actual) — compute recent 3 years (fall back to current range)
+  const packEntries = students.flatMap((s) => (s.packHistory || []).map((entry) => ({
+    year: entry?.year ?? s.packYear ?? new Date().getFullYear(),
+    items: entry.items || {},
+  })));
+
+  const uniqueYears = Array.from(new Set(packEntries.map((e) => Number(e.year)).filter(Boolean))).sort((a, b) => a - b);
+  const currentYear = new Date().getFullYear();
+  let yearsToShow;
+  if (uniqueYears.length >= 3) {
+    yearsToShow = uniqueYears.slice(-3);
+  } else {
+    const candidates = [];
+    for (let y = currentYear - 2; y <= currentYear; y += 1) candidates.push(y);
+    yearsToShow = Array.from(new Set([...uniqueYears, ...candidates])).sort((a, b) => a - b).slice(-3);
+  }
+
+  const actualByYear = {};
+  packEntries.forEach((e) => {
+    const y = String(e.year);
+    const items = e.items || {};
+    if (items.bag && items.uniforms && items.books) {
+      actualByYear[y] = (actualByYear[y] || 0) + 1;
+    }
+  });
+
+  const settingsTargets = settings.distributionTargets || settings.targets || {};
+  const targetByYear = {};
+  yearsToShow.forEach((y, idx) => {
+    const key = String(y);
+    if (settingsTargets && Object.prototype.hasOwnProperty.call(settingsTargets, key)) {
+      targetByYear[key] = Number(settingsTargets[key]) || 0;
+    } else {
+      const actual = actualByYear[key] || 0;
+      if (idx > 0) {
+        const prev = String(yearsToShow[idx - 1]);
+        const prevActual = actualByYear[prev] || 0;
+        targetByYear[key] = Math.max(1, Math.round(prevActual * 1.1));
+      } else {
+        targetByYear[key] = Math.max(1, Math.round(actual * 1.2));
+      }
+    }
+  });
+
+  const chartData = yearsToShow.map((y) => {
+    const key = String(y);
+    return {
+      year: y,
+      label: String(y) === String(yearsToShow[yearsToShow.length - 1]) ? 'Current' : String(y),
+      actual: actualByYear[key] || 0,
+      target: targetByYear[key] || 0,
+    };
+  });
+
+  const maxVal = Math.max(1, ...chartData.flatMap((d) => [d.actual, d.target]));
+
   return (
     <div className="fade-in">
       <div style={{ marginBottom: '24px' }}><h2 style={{ fontSize: '22px' }}>Dashboard</h2><p style={{ color: 'var(--fg2)', fontSize: '14px' }}>Overview of school pack distribution</p></div>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: '14px', marginBottom: '24px' }}>
-        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Total Students</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', marginTop: '4px' }}>{total}</div></div>
-        <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Boys</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--info)', marginTop: '4px' }}>{boys}</div></div>
-        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Girls</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--accent)', marginTop: '4px' }}>{girls}</div></div>
-        <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Primary</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', marginTop: '4px' }}>{primary}</div></div>
-        <div className="card stat-card amber"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>High School</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--warn)', marginTop: '4px' }}>{high}</div></div>
-        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Avg Age</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', marginTop: '4px' }}>{avgAge}</div></div>
-        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Packs Given</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--accent)', marginTop: '4px' }}>{comp}</div><div style={{ fontSize: '10px', color: 'var(--fg3)', marginTop: '2px' }}>{dist} total distributions</div></div>
-        <div className={`card stat-card ${remaining < 20 ? 'red' : 'blue'}`}><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Remaining</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Space Grotesk', color: remaining < 20 ? 'var(--danger)' : 'var(--info)', marginTop: '4px' }}>{remaining}</div></div>
+        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Total Students</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', marginTop: '4px' }}>{total}</div></div>
+        <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Boys</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--info)', marginTop: '4px' }}>{boys}</div></div>
+        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Girls</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--accent)', marginTop: '4px' }}>{girls}</div></div>
+        <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Primary</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', marginTop: '4px' }}>{primary}</div></div>
+        <div className="card stat-card amber"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>High School</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--warn)', marginTop: '4px' }}>{high}</div></div>
+        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Packs Given</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--accent)', marginTop: '4px' }}>{comp}</div><div style={{ fontSize: '10px', color: 'var(--fg3)', marginTop: '2px' }}>{dist} total distributions</div></div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '24px' }}>
         <div className="card"><h3 style={{ fontSize: '15px', marginBottom: '16px' }}>Church Breakdown</h3>
           {Object.entries(churchCounts).sort((a,b) => b[1]-a[1]).map(([n, c]) => (
             <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
@@ -44,15 +97,38 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
-        <div className="card"><h3 style={{ fontSize: '15px', marginBottom: '16px' }}>Demographics</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div style={{ padding: '14px', background: 'var(--info-bg)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--info)', fontFamily: 'Space Grotesk' }}>{boys}</div><div style={{ fontSize: '12px', color: 'var(--fg2)', marginTop: '2px' }}>Boys ({total?((boys/total*100).toFixed(0)):0}%)</div></div>
-            <div style={{ padding: '14px', background: 'var(--accent-bg)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'Space Grotesk' }}>{girls}</div><div style={{ fontSize: '12px', color: 'var(--fg2)', marginTop: '2px' }}>Girls ({total?((girls/total*100).toFixed(0)):0}%)</div></div>
-            <div style={{ padding: '14px', background: 'var(--bg3)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 700, fontFamily: 'Space Grotesk' }}>{primary}</div><div style={{ fontSize: '12px', color: 'var(--fg2)', marginTop: '2px' }}>Primary</div></div>
-            <div style={{ padding: '14px', background: 'var(--warn-bg)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--warn)', fontFamily: 'Space Grotesk' }}>{high}</div><div style={{ fontSize: '12px', color: 'var(--fg2)', marginTop: '2px' }}>High School</div></div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '24px' }}>
+        <h3 style={{ fontSize: '15px', marginBottom: '6px' }}>Distribution Trends</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--fg2)' }}>Growth Comparison ({chartData.length ? `${chartData[0].label} - ${chartData[chartData.length - 1].label}` : ''})</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ width: 12, height: 12, background: 'var(--info-bg)', borderRadius: 8, display: 'inline-block' }}></span><small style={{ color: 'var(--fg2)' }}>Target</small></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ width: 12, height: 12, background: 'var(--info)', borderRadius: 8, display: 'inline-block' }}></span><small style={{ color: 'var(--fg2)' }}>Actual</small></div>
           </div>
-          <div style={{ marginTop: '14px', padding: '12px', background: 'var(--bg3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '13px', color: 'var(--fg2)' }}>Average Age</span><span style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'Space Grotesk' }}>{avgAge} yrs</span>
+        </div>
+
+        <div className="dist-chart-wrap">
+          <div className="dist-values-row" aria-hidden="false">
+            {chartData.map((d) => (
+              <div className="dist-values-cell" key={`val-${d.year}`}>
+                <div className="dist-value dist-value-target" title={`Target ${d.target.toLocaleString()}`}>{d.target.toLocaleString()}</div>
+                <div className="dist-value dist-value-actual" title={`Actual ${d.actual.toLocaleString()}`}>{d.actual.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="dist-chart">
+            {chartData.map((d) => (
+              <div className="dist-col" key={`col-${d.year}`}>
+                <div className="dist-bar-wrapper" aria-hidden="true">
+                  <div className="dist-bar target" style={{ height: `${Math.round((d.target / maxVal) * 100)}%` }} />
+                  <div className="dist-bar actual" style={{ height: `${Math.round((d.actual / maxVal) * 100)}%` }} />
+                </div>
+                <div className="dist-label" style={{ marginTop: '8px' }}>{d.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

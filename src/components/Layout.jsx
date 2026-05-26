@@ -28,7 +28,7 @@ export default function Layout({ activeView, onNavigate }) {
             <i className="fas fa-backpack" style={{ color: 'var(--accent)', fontSize: '16px' }}></i>
           </div>
           <div>
-            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: '15px' }}>Pack Tracker</div>
+            <div style={{ fontFamily: 'Kantumruy', fontWeight: 700, fontSize: '15px' }}>Pack Tracker</div>
             <div style={{ fontSize: '11px', color: 'var(--fg3)' }}>Data Management</div>
           </div>
         </div>

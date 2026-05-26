@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 const DEFAULT_MINISTRIES = ["Youth Ministry","Women's Ministry","Men's Ministry","Children's Ministry","Sunday School","Outreach Ministry","Worship Team"];
 const DEFAULT_CHURCHES = ['Main Church','North Branch','South Branch','Community Center'];

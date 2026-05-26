@@ -303,7 +303,9 @@ function AppContent() {
     <div className="main-wrap">
       <Layout activeView={detailId ? 'students' : currentView} onNavigate={handleNavigate} />
       <main className="main-content">
-        {renderView()}
+        <div className="container">
+          {renderView()}
+        </div>
       </main>
       <CameraModal />
       <ToastContainer />
