@@ -11,12 +11,20 @@ services:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        value: 4000
+        value: 3306
       - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
         sync: false
       - key: DB_DATABASE
         sync: false
-      - key: DB_CA_PATH
-        value: isrgrootx1.pem
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false

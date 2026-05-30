@@ -1,4 +1,5 @@
 const { query } = require('../config/db');
+const { uploadBase64ToR2, deleteFromR2 } = require('../utils/uploadToR2');
 
 // --- Helper Functions ---
 
@@ -148,7 +149,24 @@ const getLookupId = async (table, name) => {
     return null;
 };
 
-const mapStudentToDb = async (student) => {
+/**
+ * Resolve a photo field to a stored URL:
+ * - If it's already an https:// URL (already in R2), keep it.
+ * - If it's a base64 data URI, upload to R2 and return the URL.
+ *   Optionally deletes the old R2 image if provided.
+ * - Otherwise return null.
+ */
+const resolvePhotoPath = async (photo, existingPhotoUrl = null) => {
+    if (!photo || typeof photo !== 'string' || !photo.trim()) return null;
+    if (photo.startsWith('http')) return photo; // already an R2 (or other) URL
+    if (photo.startsWith('data:')) {
+        if (existingPhotoUrl) await deleteFromR2(existingPhotoUrl); // clean up old image
+        return await uploadBase64ToR2(photo);
+    }
+    return null;
+};
+
+const mapStudentToDb = async (student, existingPhotoUrl = null) => {
     const ministryId = await getLookupId('ministries', student.ministry);
     const churchId = await getLookupId('churches', student.church);
 
@@ -164,6 +182,8 @@ const mapStudentToDb = async (student) => {
         }
         studentId = `FFCC${String(nextNum).padStart(4, '0')}`;
     }
+
+    const photoPath = await resolvePhotoPath(student.photo, existingPhotoUrl);
 
     return {
         student_id: studentId,
@@ -187,8 +207,7 @@ const mapStudentToDb = async (student) => {
         guardian_name: student.guardianName || null,
         guardian_phone: student.guardianPhone || null,
         pack_history_year: Number(student.packYear) || null,
-        photo_path:
-            typeof student.photo === 'string' && student.photo.trim() ? student.photo : null,
+        photo_path: photoPath,
         is_active: student.isActive === undefined ? 1 : Number(Boolean(student.isActive)),
         created_by: student.createdBy || null,
     };
@@ -306,11 +325,13 @@ exports.createStudent = async (req, res) => {
 
 exports.updateStudent = async (req, res) => {
     try {
-        const existing = await query('SELECT id FROM students WHERE id = ? LIMIT 1', [req.params.id]);
+        const existing = await query('SELECT id, photo_path FROM students WHERE id = ? LIMIT 1', [req.params.id]);
         if (existing.length === 0) {
             return res.status(404).json({ error: 'Student not found' });
         }
-        const studentData = await mapStudentToDb(req.body);
+        // Pass the existing photo URL so R2 can delete the old image if a new one is uploaded
+        const existingPhotoUrl = existing[0].photo_path || null;
+        const studentData = await mapStudentToDb(req.body, existingPhotoUrl);
         await query('UPDATE students SET ? WHERE id = ?', [studentData, req.params.id]);
         await replacePackHistory(req.params.id, req.body);
         const students = await getStudentsWithHistory('WHERE s.id = ?', [req.params.id], { limit: 1 });
