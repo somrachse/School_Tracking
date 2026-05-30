@@ -1,7 +1,7 @@
 /**
  * Cloudflare Worker – R2 Image Server
  *
- * Routes:  https://schoolpack.online/schoolpack-storage/*
+ * Routes:  https://schooltracking.online/schoolpack-storage/*
  * Serves:  Objects from the "schoolpack-storage" R2 bucket
  *
  * Deploy steps (Cloudflare Dashboard):

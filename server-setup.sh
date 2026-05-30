@@ -39,11 +39,11 @@ mkdir -p /var/www/school-pack-tracker
 chown -R $USER:$USER /var/www/school-pack-tracker
 echo "✅ Directory created: /var/www/school-pack-tracker"
 
-# 7. Configure Nginx for schoolpack.online
-cat > /etc/nginx/sites-available/schoolpack.online << 'EOF'
+# 7. Configure Nginx for schooltracking.online
+cat > /etc/nginx/sites-available/schooltracking.online << 'EOF'
 server {
     listen 80;
-    server_name schoolpack.online www.schoolpack.online;
+    server_name schooltracking.online www.schooltracking.online;
 
     # Serve the React Frontend
     root /var/www/school-pack-tracker/dist;
@@ -67,11 +67,11 @@ server {
 EOF
 
 # Enable site and remove default
-ln -sf /etc/nginx/sites-available/schoolpack.online /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/schooltracking.online /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
-echo "✅ Nginx configured for schoolpack.online"
+echo "✅ Nginx configured for schooltracking.online"
 
 # 8. Set up SSH Keys for GitHub Actions
 # If the root user does not have a key, generate one
@@ -98,7 +98,7 @@ echo "   cp .env.example .env (and fill in DB and R2 credentials)"
 echo "   mysql -u root -p < setup_local_db.sql"
 echo ""
 echo "3. Issue SSL Certificate (After DNS propagates):"
-echo "   certbot --nginx -d schoolpack.online -d www.schoolpack.online"
+echo "   certbot --nginx -d schooltracking.online -d www.schooltracking.online"
 echo ""
 echo "4. Add this Private Key to GitHub Secrets as SSH_PRIVATE_KEY:"
 echo "--------------------------------------------------------------------------------"
