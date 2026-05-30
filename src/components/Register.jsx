@@ -30,7 +30,7 @@ const CAMBODIA_ADDRESS_OPTIONS = [
 ];
 
 export default function Register() {
-  const { students, addStudent, updateStudent, settings, editingId, setEditingId, setCurrentView, currentPhoto, setCurrentPhoto, setCameraModal, showToast } = useApp();
+  const { students, addStudent, updateStudent, settings, editingId, setEditingId, setCurrentView, currentPhoto, setCurrentPhoto, setCurrentDocs, currentDocs, setCameraModal, setCameraTarget, showToast } = useApp();
   const currentYear = new Date().getFullYear();
   const [form, setForm] = useState({
     name: '',
@@ -56,6 +56,7 @@ export default function Register() {
   });
   const [studentLookup, setStudentLookup] = useState('');
   const [selectedExistingId, setSelectedExistingId] = useState(null);
+  const [showLookupSuggestions, setShowLookupSuggestions] = useState(false);
 
   const buildFormFromStudent = (student, yearOverride) => ({
     name: student.name,
@@ -137,12 +138,42 @@ export default function Register() {
     showToast(`Loaded ${matchedStudent.name}`);
   };
 
+  const selectExistingStudent = (student) => {
+    setStudentLookup(student.name);
+    setShowLookupSuggestions(false);
+    loadExistingStudent(student.name);
+  };
+
+  const lookupText = studentLookup.trim().toLowerCase();
+  const lookupSuggestions = lookupText
+    ? students
+        .filter((student) => student.name.trim().toLowerCase().includes(lookupText))
+        .slice(0, 6)
+    : [];
+
   const buildPackHistoryForYear = (existingHistory, year) => {
     const history = Array.isArray(existingHistory) ? [...existingHistory] : [];
     if (!history.some((entry) => Number(entry.year) === Number(year))) {
       history.push({ year, items: { bag: false, uniforms: false, books: false } });
     }
     return history;
+  };
+
+  const handleDocFiles = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    files.forEach((f) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setCurrentDocs((prev) => [...prev, { name: f.name, dataUrl: ev.target.result }]);
+      };
+      reader.readAsDataURL(f);
+    });
+    e.target.value = '';
+  };
+
+  const removeDoc = (index) => {
+    setCurrentDocs((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (e) => {
@@ -166,6 +197,7 @@ export default function Register() {
         grade: parseInt(form.grade, 10),
         packYear: parsedPackYear,
         photo: currentPhoto,
+        documents: currentDocs,
         packHistory: buildPackHistoryForYear(student.packHistory, parsedPackYear),
       };
 
@@ -187,6 +219,7 @@ export default function Register() {
         grade: parseInt(form.grade, 10),
         packYear: parsedPackYear,
         photo: currentPhoto,
+        documents: currentDocs,
         packHistory: buildPackHistoryForYear(student.packHistory, parsedPackYear),
       };
 
@@ -199,7 +232,7 @@ export default function Register() {
       });
     } else {
       const newStudent = {
-        ...form, grade: parseInt(form.grade, 10), packYear: parsedPackYear, photo: currentPhoto,
+        ...form, grade: parseInt(form.grade, 10), packYear: parsedPackYear, photo: currentPhoto, documents: currentDocs,
         packHistory: [{ year: parsedPackYear, items: { bag: false, uniforms: false, books: false } }],
       };
 
@@ -209,6 +242,7 @@ export default function Register() {
         setStudentLookup('');
         setSelectedExistingId(null);
         setCurrentPhoto('');
+        setCurrentDocs([]);
       });
     }
   };
@@ -218,22 +252,44 @@ export default function Register() {
       <div style={{ marginBottom: '24px' }}><h2 style={{ fontSize: '22px' }}>{editingId ? 'Edit Student' : 'Register Student'}</h2><p style={{ color: 'var(--fg2)', fontSize: '14px' }}>{editingId ? `Editing: ${form.name}` : 'Fill in the student details below'}</p></div>
       <form onSubmit={handleSubmit} className="card" style={{ padding: '24px', width: '100%', maxWidth: '1200px' }}>
         {!editingId ? (
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '20px', position: 'relative' }}>
             <label className="field-label">Find Existing Student</label>
             <input
               type="text"
               className="input-field"
-              list="student-name-list"
               placeholder="Search student name to auto fill all fields"
               value={studentLookup}
               onChange={(e) => {
                 setStudentLookup(e.target.value);
-                loadExistingStudent(e.target.value);
+                setSelectedExistingId(null);
+                setShowLookupSuggestions(Boolean(e.target.value.trim()));
+              }}
+              onFocus={() => setShowLookupSuggestions(Boolean(studentLookup.trim()))}
+              onBlur={() => {
+                setTimeout(() => {
+                  setShowLookupSuggestions(false);
+                  loadExistingStudent(studentLookup);
+                }, 120);
               }}
             />
-            <datalist id="student-name-list">
-              {students.map((student) => <option key={student.id} value={student.name} />)}
-            </datalist>
+            {showLookupSuggestions && lookupSuggestions.length > 0 ? (
+              <div className="lookup-suggestions">
+                {lookupSuggestions.map((student) => (
+                  <button
+                    key={student.id}
+                    type="button"
+                    className="lookup-suggestion"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      selectExistingStudent(student);
+                    }}
+                  >
+                    <span>{student.name}</span>
+                    <small>{student.school || 'No school'} • Grade {student.grade || '-'}</small>
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <p style={{ color: 'var(--fg3)', fontSize: '12px', marginTop: '8px' }}>
               Choose a student from the list to auto fill all details and save a new pack history year.
             </p>
@@ -250,6 +306,14 @@ export default function Register() {
                 <i className="fas fa-trash"></i> Remove
               </button>
             ) : null}
+              <div style={{ marginTop: 8, width: '120px', textAlign: 'center' }}>
+                <input type="file" id="docUpload" accept="image/*,application/pdf" style={{ display: 'none' }} multiple onChange={handleDocFiles} />
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                  <label htmlFor="docUpload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}><i className="fas fa-upload"></i>Upload</label>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setCameraTarget('document'); setCameraModal(true); }}><i className="fas fa-camera"></i>Take Doc</button>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--fg3)' }}>Add registration papers</div>
+              </div>
           </div>
           <div>
             <div style={{ marginBottom: '12px' }}><label className="field-label">Full Name *</label><input type="text" className="input-field" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
@@ -322,6 +386,27 @@ export default function Register() {
             value={form.packYear}
             onChange={e => setForm({...form, packYear: e.target.value})}
           />
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label className="field-label">Attached Documents</label>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {currentDocs.length === 0 ? (
+              <div style={{ color: 'var(--fg3)' }}>No documents attached</div>
+            ) : currentDocs.map((doc, idx) => (
+              <div key={idx} style={{ width: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                {doc.dataUrl && String(doc.dataUrl).startsWith('data:image') ? (
+                  <img src={doc.dataUrl} alt={doc.name} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
+                ) : (
+                  <div style={{ width: 120, height: 120, borderRadius: 8, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="fas fa-file-pdf" style={{ fontSize: 28 }}></i>
+                  </div>
+                )}
+                <div style={{ fontSize: 12, color: 'var(--fg3)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{doc.name}</div>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeDoc(idx)}><i className="fas fa-trash"></i></button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>

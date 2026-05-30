@@ -15,27 +15,40 @@ export function ToastContainer() {
 }
 
 export function CameraModal() {
-  const { cameraModal, setCameraModal, setCurrentPhoto, showToast } = useApp();
+  const { cameraModal, setCameraModal, setCurrentPhoto, setCurrentDocs, cameraTarget, showToast } = useApp();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
 
   useEffect(() => {
     if (cameraModal && videoRef.current) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(stream => {
+      const facing = cameraTarget === 'document' ? { ideal: 'environment' } : 'user';
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: facing } }).then(stream => {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
       }).catch(() => showToast('Camera not available', 'error'));
     }
     return () => { if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop()); };
-  }, [cameraModal]);
+  }, [cameraModal, cameraTarget]);
 
   const capture = () => {
     const v = videoRef.current, c = canvasRef.current;
+    if (cameraTarget === 'document') {
+      // capture larger image for documents
+      const w = 1200;
+      const h = Math.round((v.videoHeight / v.videoWidth) * w) || 900;
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(v, 0, 0, w, h);
+      const data = c.toDataURL('image/jpeg', 0.8);
+      setCurrentDocs((prev) => [...prev, { name: `doc-${Date.now()}.jpg`, dataUrl: data }]);
+      setCameraModal(false);
+      return;
+    }
     c.width = 200; c.height = 200;
     const ctx = c.getContext('2d');
     const sz = Math.min(v.videoWidth, v.videoHeight);
-    ctx.drawImage(v, (v.videoWidth-sz)/2, (v.videoHeight-sz)/2, sz, sz, 0, 0, 200, 200);
+    ctx.drawImage(v, (v.videoWidth - sz) / 2, (v.videoHeight - sz) / 2, sz, sz, 0, 0, 200, 200);
     setCurrentPhoto(c.toDataURL('image/jpeg', 0.5));
     setCameraModal(false);
   };
@@ -46,10 +59,21 @@ export function CameraModal() {
     r.onload = (ev) => {
       const img = new Image();
       img.onload = () => {
-        const c = canvasRef.current; c.width = 200; c.height = 200;
+        const c = canvasRef.current;
+        if (cameraTarget === 'document') {
+          // keep full aspect for document
+          const w = 1200; const h = Math.round((img.height / img.width) * w) || 900;
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          setCurrentDocs((prev) => [...prev, { name: f.name, dataUrl: c.toDataURL('image/jpeg', 0.8) }]);
+          setCameraModal(false);
+          return;
+        }
+        c.width = 200; c.height = 200;
         const ctx = c.getContext('2d');
         const sz = Math.min(img.width, img.height);
-        ctx.drawImage(img, (img.width-sz)/2, (img.height-sz)/2, sz, sz, 0, 0, 200, 200);
+        ctx.drawImage(img, (img.width - sz) / 2, (img.height - sz) / 2, sz, sz, 0, 0, 200, 200);
         setCurrentPhoto(c.toDataURL('image/jpeg', 0.5));
         setCameraModal(false);
       };

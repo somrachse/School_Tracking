@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useApp, calcAge, getLevel, packStatus, toggleStudentPackStatus, formatStudentCode } from '../AppContext';
 
 const HEADER_ALIASES = {
@@ -22,6 +22,7 @@ const HEADER_ALIASES = {
   guardianName: ['guardian', 'guardian name'],
   guardianPhone: ["guardian's phone number", 'guardian phone'],
   packYear: ['pack history year', 'pack year', 'year'],
+  status: ['status', 'pack status'],
   bag: ['bag', 'bag given'],
   uniforms: ['uniform', 'uniforms', 'uniforms given'],
   books: ['book', 'books', 'books given'],
@@ -115,6 +116,17 @@ const parseBoolean = (value) => {
   return ['1', 'true', 'yes', 'y', 'done'].includes(normalized);
 };
 
+const parsePackItemsFromStatus = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (['complete', 'completed', 'done', 'received'].includes(normalized)) {
+    return { bag: true, uniforms: true, books: true };
+  }
+  if (['pending', 'none', 'not complete', 'incomplete', 'no'].includes(normalized)) {
+    return { bag: false, uniforms: false, books: false };
+  }
+  return null;
+};
+
 const getRowValue = (rowMap, key) => {
   const aliases = HEADER_ALIASES[key] || [];
   for (const alias of aliases) {
@@ -126,14 +138,19 @@ const getRowValue = (rowMap, key) => {
   return '';
 };
 
+const hasRowValue = (rowMap, key) => String(getRowValue(rowMap, key) || '').trim() !== '';
+
 export default function Students({ onViewDetail }) {
-  const { students, settings, updateStudent, bulkAddStudents, showToast } = useApp();
+  const { students, settings, updateStudent, bulkAddStudents, showToast, deleteStudent, setEditingId, setCurrentView } = useApp();
   const [search, setSearch] = useState('');
   const [filterChurch, setFilterChurch] = useState('');
   const [filterLvl, setFilterLvl] = useState('');
   const [filterGen, setFilterGen] = useState('');
   const [filterPackYear, setFilterPackYear] = useState('');
+  const [sortBy, setSortBy] = useState('');
   const importInputRef = useRef(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const packYears = Array.from(
     new Set(
@@ -184,8 +201,17 @@ export default function Students({ onViewDetail }) {
     URL.revokeObjectURL(url);
   };
 
+  const sorted = (() => {
+    const copy = [...filtered];
+    if (sortBy === 'az') return copy.sort((a, b) => (String(a.name || '')).localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' }));
+    if (sortBy === 'za') return copy.sort((a, b) => (String(b.name || '')).localeCompare(String(a.name || ''), undefined, { sensitivity: 'base' }));
+    return copy;
+  })();
+  const visibleIds = sorted.map((student) => String(student.id));
+  const selectedVisibleIds = selectedIds.filter((id) => visibleIds.includes(String(id)));
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(String(id)));
+
   const csvCell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-  const excelText = (value) => `="${String(value ?? '').replace(/"/g, '""')}"`;
 
   const exportExcel = () => {
     if (filtered.length === 0) {
@@ -197,12 +223,11 @@ export default function Students({ onViewDetail }) {
       [
         'Student ID',
         'Name',
+        'Age',
         'Date of Birth',
         'Gender',
         'Grade',
         'School',
-        'Phone',
-        'Ministry',
         'Church',
         'Address',
         'Future Dream / Goal',
@@ -215,18 +240,15 @@ export default function Students({ onViewDetail }) {
         "Mother's Phone Number",
         'Guardian',
         "Guardian's Phone Number",
-        'Pack History Year',
-        'Status',
       ],
       ...filtered.map((student) => [
         student.student_id || formatStudentCode(student.id), // Prefer backend student_id, then formatted id
         student.name || '',
+        calcAge(student.dob),
         student.dob || '',
         student.gender || '',
         student.grade || '',
         student.school || '',
-        excelText(student.phone || ''),
-        student.ministry || '',
         student.church || '',
         student.address || '',
         student.futureGoal || '',
@@ -234,13 +256,11 @@ export default function Students({ onViewDetail }) {
         student.conversionDate || '',
         student.baptismDate || '',
         student.fatherName || '',
-        excelText(student.fatherPhone || ''),
+        student.fatherPhone || '',
         student.motherName || '',
-        excelText(student.motherPhone || ''),
+        student.motherPhone || '',
         student.guardianName || '',
-        excelText(student.guardianPhone || ''),
-        student.packYear || '',
-        packStatus(student),
+        student.guardianPhone || '',
       ]),
     ];
 
@@ -268,18 +288,14 @@ export default function Students({ onViewDetail }) {
 
     const rows = filtered
       .map((student, index) => {
-        const status = packStatus(student);
         return `
           <tr>
             <td>${index + 1}</td>
             <td>${student.name || ''}</td>
+            <td>${calcAge(student.dob)}</td>
             <td>${student.gender || ''}</td>
             <td>${student.grade || ''}</td>
             <td>${student.school || ''}</td>
-            <td>${student.ministry || ''}</td>
-            <td>${student.phone || ''}</td>
-            <td>${student.packYear || ''}</td>
-            <td>${status}</td>
           </tr>
         `;
       })
@@ -309,13 +325,10 @@ export default function Students({ onViewDetail }) {
               <tr>
                 <th>No.</th>
                 <th>Name</th>
+                <th>Age</th>
                 <th>Gender</th>
                 <th>Grade</th>
                 <th>School</th>
-                <th>Ministry</th>
-                <th>Phone</th>
-                <th>Pack History Year</th>
-                <th>Status</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -351,6 +364,7 @@ export default function Students({ onViewDetail }) {
       'Guardian',
       "Guardian's Phone Number",
       'Pack History Year',
+      'Status',
       'Bag',
       'Uniforms',
       'Books',
@@ -378,6 +392,7 @@ export default function Students({ onViewDetail }) {
       '',
       '',
       String(new Date().getFullYear()),
+      'Pending',
       'No',
       'No',
       'No',
@@ -418,6 +433,18 @@ export default function Students({ onViewDetail }) {
       const ministry = String(getRowValue(rowMap, 'ministry') || '').trim();
       const packYearRaw = Number.parseInt(String(getRowValue(rowMap, 'packYear') || '').trim(), 10);
       const packYear = Number.isNaN(packYearRaw) ? currentYear : packYearRaw;
+      const statusItems = parsePackItemsFromStatus(getRowValue(rowMap, 'status'));
+      const hasItemColumns =
+        hasRowValue(rowMap, 'bag') ||
+        hasRowValue(rowMap, 'uniforms') ||
+        hasRowValue(rowMap, 'books');
+      const packItems = hasItemColumns
+        ? {
+            bag: parseBoolean(getRowValue(rowMap, 'bag')),
+            uniforms: parseBoolean(getRowValue(rowMap, 'uniforms')),
+            books: parseBoolean(getRowValue(rowMap, 'books')),
+          }
+        : statusItems || { bag: false, uniforms: false, books: false };
 
       if (!name || !dob || !gender || Number.isNaN(grade) || !school || !ministry) {
         errors.push(`Row ${i + 1}: missing required data (name, dob, gender, grade, school, ministry).`);
@@ -449,11 +476,7 @@ export default function Students({ onViewDetail }) {
         packHistory: [
           {
             year: packYear,
-            items: {
-              bag: parseBoolean(getRowValue(rowMap, 'bag')),
-              uniforms: parseBoolean(getRowValue(rowMap, 'uniforms')),
-              books: parseBoolean(getRowValue(rowMap, 'books')),
-            },
+            items: packItems,
           },
         ],
       });
@@ -506,6 +529,114 @@ export default function Students({ onViewDetail }) {
     });
   };
 
+  const openEdit = (student) => {
+    setEditingId(student.id);
+    setCurrentView('register');
+    setOpenMenuId(null);
+  };
+
+  const handleDelete = (student) => {
+    const confirmed = window.confirm(`Delete ${student.name}? This action cannot be undone.`);
+    if (!confirmed) return;
+    deleteStudent(student.id, () => {
+      showToast('Student deleted');
+    });
+    setOpenMenuId(null);
+  };
+
+  const setStudentPackStatus = (student, isComplete) => {
+    const packYear = student.packYear || new Date().getFullYear();
+    const packHistory = [...(student.packHistory || [])];
+    const items = isComplete
+      ? { bag: true, uniforms: true, books: true }
+      : { bag: false, uniforms: false, books: false };
+
+    if (packHistory.length === 0) {
+      return { ...student, packYear, packHistory: [{ year: packYear, items }] };
+    }
+
+    const lastIndex = packHistory.length - 1;
+    packHistory[lastIndex] = {
+      ...packHistory[lastIndex],
+      year: packHistory[lastIndex].year || packYear,
+      items,
+    };
+
+    return { ...student, packYear, packHistory };
+  };
+
+  const toggleSelected = (event, studentId) => {
+    event.stopPropagation();
+    const id = String(studentId);
+    setSelectedIds((prev) => (
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id]
+    ));
+  };
+
+  const toggleSelectAllVisible = (event) => {
+    event.stopPropagation();
+    setSelectedIds((prev) => {
+      if (allVisibleSelected) {
+        return prev.filter((id) => !visibleIds.includes(String(id)));
+      }
+      return Array.from(new Set([...prev, ...visibleIds]));
+    });
+  };
+
+  const handleBulkStatus = (isComplete) => {
+    const selectedStudents = students.filter((student) => selectedVisibleIds.includes(String(student.id)));
+    if (selectedStudents.length === 0) return;
+
+    let finished = 0;
+    selectedStudents.forEach((student) => {
+      updateStudent(student.id, setStudentPackStatus(student, isComplete), () => {
+        finished += 1;
+        if (finished === selectedStudents.length) {
+          showToast(`${selectedStudents.length} student(s) changed to ${isComplete ? 'Complete' : 'Pending'}`);
+          setSelectedIds([]);
+        }
+      });
+    });
+  };
+
+  const handleBulkDelete = () => {
+    const selectedStudents = students.filter((student) => selectedVisibleIds.includes(String(student.id)));
+    if (selectedStudents.length === 0) return;
+
+    const confirmed = window.confirm(`Delete ${selectedStudents.length} selected student(s)? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    let finished = 0;
+    selectedStudents.forEach((student) => {
+      deleteStudent(student.id, () => {
+        finished += 1;
+        if (finished === selectedStudents.length) {
+          showToast(`${selectedStudents.length} student(s) deleted`);
+          setSelectedIds([]);
+        }
+      });
+    });
+  };
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!e.target.closest('[data-menu]') && !e.target.closest('[data-menu-trigger]')) setOpenMenuId(null);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setOpenMenuId(null); };
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => students.some((student) => String(student.id) === String(id))));
+  }, [students]);
+
   return (
     <div className="fade-in">
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '20px' }}>
@@ -542,13 +673,36 @@ export default function Students({ onViewDetail }) {
           <option value="">All Levels</option><option value="primary">Primary (1-6)</option><option value="high">High School (7-12)</option>
         </select>
         <select className="input-field" style={{ width: 'auto', minWidth: '110px' }} value={filterGen} onChange={e => setFilterGen(e.target.value)}>
-          <option value="">All Genders</option><option value="Male">Boys</option><option value="Female">Girls</option>
+          <option value="">All Genders</option><option value="Male">Male</option><option value="Female">Female</option>
         </select>
         <select className="input-field" style={{ width: 'auto', minWidth: '130px' }} value={filterPackYear} onChange={e => setFilterPackYear(e.target.value)}>
           <option value="">All Pack Years</option>
           {packYears.map(year => <option key={year} value={year}>{year}</option>)}
         </select>
+        <select className="input-field" style={{ width: 'auto', minWidth: '140px' }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+          <option value="">Sort</option>
+          <option value="az">A - Z</option>
+          <option value="za">Z - A</option>
+        </select>
       </div>
+
+      {selectedVisibleIds.length > 0 ? (
+        <div className="bulk-actions no-print">
+          <strong>{selectedVisibleIds.length} selected</strong>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleBulkStatus(true)}>
+            <i className="fas fa-check"></i>Complete
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleBulkStatus(false)}>
+            <i className="fas fa-clock"></i>Pending
+          </button>
+          <button type="button" className="btn btn-danger btn-sm" onClick={handleBulkDelete}>
+            <i className="fas fa-trash"></i>Delete
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSelectedIds([])}>
+            Clear
+          </button>
+        </div>
+      ) : null}
 
       <div className="card" style={{ padding: '8px' }}>
         {filtered.length === 0 ? (
@@ -556,6 +710,14 @@ export default function Students({ onViewDetail }) {
         ) : (
           <div className="students-table">
             <div className="student-header">
+              <div className="student-col student-select">
+                <input
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleSelectAllVisible}
+                  aria-label="Select all visible students"
+                />
+              </div>
               <div className="student-col student-id">Student ID</div>
               <div className="student-col student-name">Full Name</div>
               <div className="student-col student-gender">Gender</div>
@@ -565,18 +727,29 @@ export default function Students({ onViewDetail }) {
               <div className="student-col student-actions" aria-hidden="true"></div>
             </div>
 
-            {filtered.map((s) => {
+            {sorted.map((s) => {
               const age = calcAge(s.dob);
               const st = packStatus(s);
+              const isSelected = selectedIds.includes(String(s.id));
               return (
-                <div key={s.id} className="student-row" onClick={() => onViewDetail(s.id)}>
+                <div key={s.id} className={`student-row ${isSelected ? 'selected' : ''}`} onClick={() => onViewDetail(s.id)}>
+                  <div className="student-col student-select">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(event) => toggleSelected(event, s.id)}
+                      onClick={(event) => event.stopPropagation()}
+                      aria-label={`Select ${s.name}`}
+                    />
+                  </div>
                   <div className="student-col student-id">{s.student_id || formatStudentCode(s.id)}</div>
 
                   <div className="student-col student-name" style={{ display: 'flex', alignItems: 'center' }}>
                     <div className="student-photo">{s.photo ? <img src={s.photo} alt="" /> : <i className="fas fa-user"></i>}</div>
-                    <div style={{ marginLeft: '10px', minWidth: 0 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--fg3)', marginTop: '2px' }}>{s.church || ''}</div>
+                    <div className="student-name-meta" style={{ marginLeft: '10px', minWidth: 0 }}>
+                      <div className="student-name-main">{s.name}</div>
+                      <div className="student-name-church">{s.church || ''}</div>
+                      <div className="student-gender-inline">{s.gender || ''}</div>
                     </div>
                   </div>
 
@@ -601,11 +774,18 @@ export default function Students({ onViewDetail }) {
                     <button
                       type="button"
                       className="btn btn-icon"
-                      onClick={(e) => { e.stopPropagation(); }}
+                      onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === s.id ? null : s.id); }}
                       aria-label="Actions"
+                      data-menu-trigger={s.id}
                     >
                       <i className="fas fa-ellipsis-v"></i>
                     </button>
+                    {openMenuId === s.id && (
+                      <div className="action-menu" data-menu>
+                        <button type="button" className="action-item" onClick={(e) => { e.stopPropagation(); openEdit(s); }}><i className="fas fa-pen" style={{ marginRight: 8 }}></i>Edit</button>
+                        <button type="button" className="action-item delete" onClick={(e) => { e.stopPropagation(); handleDelete(s); }}><i className="fas fa-trash" style={{ marginRight: 8 }}></i>Delete</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

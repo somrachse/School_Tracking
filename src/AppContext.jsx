@@ -46,6 +46,8 @@ export function AppProvider({ children }) {
   const [currentView, setCurrentView] = useState('dashboard');
   const [editingId, setEditingId] = useState(null);
   const [currentPhoto, setCurrentPhoto] = useState('');
+  const [currentDocs, setCurrentDocs] = useState([]);
+  const [cameraTarget, setCameraTarget] = useState('photo');
   const [toasts, setToasts] = useState([]);
 
   // Modals
@@ -167,7 +169,18 @@ export function AppProvider({ children }) {
     })
       .then((createdStudents) => {
         const normalized = createdStudents.map(normalizeStudent);
-        setStudents(prev => [...prev, ...normalized]);
+        setStudents(prev => {
+          const next = [...prev];
+          for (const student of normalized) {
+            const index = next.findIndex((item) => String(item.id) === String(student.id));
+            if (index >= 0) {
+              next[index] = student;
+            } else {
+              next.push(student);
+            }
+          }
+          return next;
+        });
         if (cb) cb(normalized);
       })
       .catch((error) => showToast(error.message || 'Failed to import students', 'error'));
@@ -253,7 +266,7 @@ export function AppProvider({ children }) {
       students, saveStudents, addStudent, updateStudent, deleteStudent, clearStudents, bulkAddStudents,
       settings, saveSettings, addMinistry, removeMinistry, addChurch, removeChurch,
       currentView, setCurrentView, editingId, setEditingId,
-      currentPhoto, setCurrentPhoto, toasts, showToast,
+      currentPhoto, setCurrentPhoto, currentDocs, setCurrentDocs, cameraTarget, setCameraTarget, toasts, showToast,
       cameraModal, setCameraModal, packModal, setPackModal,
       confirmModal, setConfirmModal, toggleTheme
     }}>

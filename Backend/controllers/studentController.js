@@ -65,6 +65,27 @@ const buildPackRows = (student, fallbackYear) => {
     return [{ year, items: { bag: false, uniforms: false, books: false } }];
 };
 
+const mergePackHistory = (existingHistory = [], incomingHistory = []) => {
+    const byYear = new Map();
+
+    for (const entry of [...existingHistory, ...incomingHistory]) {
+        const year = Number(entry.year);
+        if (Number.isNaN(year)) continue;
+
+        const current = byYear.get(year) || { year, items: { bag: false, uniforms: false, books: false } };
+        byYear.set(year, {
+            year,
+            items: {
+                bag: Boolean(current.items?.bag || entry.items?.bag),
+                uniforms: Boolean(current.items?.uniforms || entry.items?.uniforms),
+                books: Boolean(current.items?.books || entry.items?.books),
+            },
+        });
+    }
+
+    return Array.from(byYear.values()).sort((a, b) => a.year - b.year);
+};
+
 const formatStudentForResponse = (student, packHistory = []) => {
     const latestYear =
         packHistory.length > 0
@@ -194,6 +215,18 @@ const replacePackHistory = async (studentId, student) => {
     }
 };
 
+const findActiveStudentByName = async (name) => {
+    const normalizedName = String(name || '').trim().toLowerCase();
+    if (!normalizedName) return null;
+
+    const rows = await query(
+        'SELECT id FROM students WHERE is_active = 1 AND LOWER(TRIM(name)) = ? ORDER BY id ASC LIMIT 1',
+        [normalizedName]
+    );
+
+    return rows[0] || null;
+};
+
 const getStudentsWithHistory = async (whereClause = '', params = [], options = {}) => {
     const limitClause = options.limit ? ` LIMIT ${Number(options.limit)}` : '';
     const students = await query(
@@ -295,6 +328,27 @@ exports.bulkCreateStudents = async (req, res) => {
     try {
         const created = [];
         for (const student of students) {
+            const existing = await findActiveStudentByName(student.name);
+            if (existing) {
+                const [existingStudent] = await getStudentsWithHistory('WHERE s.id = ?', [existing.id], { limit: 1 });
+                const incomingHistory = buildPackRows(student);
+                const mergedHistory = mergePackHistory(existingStudent.packHistory, incomingHistory);
+
+                await query(
+                    'UPDATE students SET pack_history_year = ? WHERE id = ?',
+                    [mergedHistory[mergedHistory.length - 1]?.year || null, existing.id]
+                );
+                await replacePackHistory(existing.id, {
+                    ...existingStudent,
+                    packYear: mergedHistory[mergedHistory.length - 1]?.year,
+                    packHistory: mergedHistory,
+                });
+
+                const savedStudents = await getStudentsWithHistory('WHERE s.id = ?', [existing.id], { limit: 1 });
+                created.push(savedStudents[0]);
+                continue;
+            }
+
             const studentData = await mapStudentToDb(student);
             const result = await query('INSERT INTO students SET ?', [studentData]);
             await replacePackHistory(result.insertId, student);
