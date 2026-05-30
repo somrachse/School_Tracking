@@ -1,0 +1,47 @@
+name: Deploy to DigitalOcean
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/school-pack-tracker
+            
+            # Stash any local changes that shouldn't be tracked (just in case)
+            git stash
+            
+            # Pull latest changes from main
+            git pull origin main
+            
+            # Deploy Backend
+            echo "Building backend..."
+            cd Backend
+            npm install
+            
+            # Start or Restart PM2 Process
+            pm2 describe backend-api > /dev/null
+            if [ $? -eq 0 ]; then
+                pm2 restart backend-api
+            else
+                pm2 start server.js --name "backend-api"
+            fi
+            
+            # Save PM2 process list to auto-start on server reboot
+            pm2 save
+            
+            # Deploy Frontend
+            echo "Building frontend..."
+            cd ..
+            npm install
+            npm run build
+            
+            echo "Deployment Complete!"
