@@ -1,8 +1,8 @@
 import { useApp } from '../AppContext';
 
 export default function Layout({ activeView, onNavigate }) {
-  const { currentView, setCurrentView, toggleTheme } = useApp();
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const { currentView, setCurrentView, toggleTheme, theme } = useApp();
+  const isDark = (theme || 'dark') === 'dark';
   const selectedView = activeView || currentView;
 
   const handleNavigate = (view) => {

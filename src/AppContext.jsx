@@ -49,6 +49,7 @@ export function AppProvider({ children }) {
   const [currentDocs, setCurrentDocs] = useState([]);
   const [cameraTarget, setCameraTarget] = useState('photo');
   const [toasts, setToasts] = useState([]);
+  const [theme, setTheme] = useState(() => localStorage.getItem('spt_theme') || 'dark');
 
   // Modals
   const [cameraModal, setCameraModal] = useState(false);
@@ -110,10 +111,14 @@ export function AppProvider({ children }) {
         showToast('Failed to load students', 'error');
       });
 
-    // Theme
-    const theme = localStorage.getItem('spt_theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
+    // Theme is managed via state; initial value comes from localStorage in useState
   }, []);
+
+  // Keep document attribute and localStorage in sync with theme state
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme || 'dark');
+    try { localStorage.setItem('spt_theme', theme || 'dark'); } catch (e) { }
+  }, [theme]);
 
   // Add student
   const addStudent = (student, cb) => {
@@ -255,9 +260,7 @@ export function AppProvider({ children }) {
   };
 
   const toggleTheme = (isChecked) => {
-    const theme = isChecked ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('spt_theme', theme);
+    setTheme(isChecked ? 'dark' : 'light');
   };
 
 
@@ -269,6 +272,7 @@ export function AppProvider({ children }) {
       currentPhoto, setCurrentPhoto, currentDocs, setCurrentDocs, cameraTarget, setCameraTarget, toasts, showToast,
       cameraModal, setCameraModal, packModal, setPackModal,
       confirmModal, setConfirmModal, toggleTheme
+      , theme
     }}>
       {children}
     </AppContext.Provider>

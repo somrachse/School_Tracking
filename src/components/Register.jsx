@@ -159,6 +159,10 @@ export default function Register() {
     return history;
   };
 
+  const removeDoc = (index) => {
+    setCurrentDocs((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleDocFiles = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -170,10 +174,6 @@ export default function Register() {
       reader.readAsDataURL(f);
     });
     e.target.value = '';
-  };
-
-  const removeDoc = (index) => {
-    setCurrentDocs((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (e) => {
@@ -298,7 +298,7 @@ export default function Register() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '140px minmax(0, 1fr)', alignItems: 'start', gap: '24px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-            <div className="photo-preview" onClick={() => setCameraModal(true)} style={{ width: '120px', height: '120px' }}>
+            <div className="photo-preview" onClick={() => { setCameraTarget('photo'); setCameraModal(true); }} style={{ width: '120px', height: '120px' }}>
               {currentPhoto ? <img src={currentPhoto} alt="Photo" /> : <><i className="fas fa-camera" style={{ fontSize: '24px' }}></i><span>Add Photo</span></>}
             </div>
             {currentPhoto ? (
@@ -307,12 +307,7 @@ export default function Register() {
               </button>
             ) : null}
               <div style={{ marginTop: 8, width: '120px', textAlign: 'center' }}>
-                <input type="file" id="docUpload" accept="image/*,application/pdf" style={{ display: 'none' }} multiple onChange={handleDocFiles} />
-                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                  <label htmlFor="docUpload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}><i className="fas fa-upload"></i>Upload</label>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setCameraTarget('document'); setCameraModal(true); }}><i className="fas fa-camera"></i>Take Doc</button>
-                </div>
-                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--fg3)' }}>Add registration papers</div>
+                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--fg3)' }}>Photo ID</div>
               </div>
           </div>
           <div>
@@ -333,7 +328,28 @@ export default function Register() {
           <div><label className="field-label">Ministry *</label><select className="input-field" required value={form.ministry} onChange={e => setForm({...form, ministry: e.target.value})}><option value="">Select Ministry</option>{settings.ministries.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Church</label><select className="input-field" value={form.church} onChange={e => setForm({...form, church: e.target.value})}><option value="">Select Church</option>{settings.churches.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+          <div>
+            {currentDocs && currentDocs.length > 0 ? (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {currentDocs.map((doc, idx) => (
+                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 88 }}>
+                    {doc.dataUrl && String(doc.dataUrl).startsWith('data:image') ? (
+                      <img src={doc.dataUrl} alt={doc.name} style={{ width: 88, height: 56, objectFit: 'cover', borderRadius: 6 }} />
+                    ) : (
+                      <div style={{ width: 88, height: 56, borderRadius: 6, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className="fas fa-file-pdf" style={{ fontSize: 20 }}></i>
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: 'var(--fg3)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{doc.name}</div>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeDoc(idx)} style={{ marginTop: 6 }}><i className="fas fa-trash"></i></button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            <label className="field-label">Church</label>
+            <select className="input-field" value={form.church} onChange={e => setForm({...form, church: e.target.value})}><option value="">Select Church</option>{settings.churches.map(c => <option key={c} value={c}>{c}</option>)}</select>
+          </div>
           <div>
             <label className="field-label">Address</label>
             <input
@@ -390,7 +406,12 @@ export default function Register() {
 
         <div style={{ marginBottom: '16px' }}>
           <label className="field-label">Attached Documents</label>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            <input type="file" id="docUpload" accept="image/*,application/pdf" style={{ display: 'none' }} multiple onChange={handleDocFiles} />
+            <label htmlFor="docUpload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}><i className="fas fa-upload"></i> Add Document</label>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setCameraTarget('document'); setCameraModal(true); }}><i className="fas fa-camera"></i> Scan</button>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: 8 }}>
             {currentDocs.length === 0 ? (
               <div style={{ color: 'var(--fg3)' }}>No documents attached</div>
             ) : currentDocs.map((doc, idx) => (

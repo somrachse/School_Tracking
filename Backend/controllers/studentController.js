@@ -210,6 +210,7 @@ const mapStudentToDb = async (student, existingPhotoUrl = null) => {
         photo_path: photoPath,
         is_active: student.isActive === undefined ? 1 : Number(Boolean(student.isActive)),
         created_by: student.createdBy || null,
+        // documents are handled separately in student_documents table
     };
 };
 
@@ -280,12 +281,29 @@ const getStudentsWithHistory = async (whereClause = '', params = [], options = {
         packHistoryByStudent.set(row.student_id, current);
     }
 
-    return students.map((student) =>
+    const formatted = students.map((student) =>
         formatStudentForResponse(
             student,
             packRowsToHistory(packHistoryByStudent.get(student.id) || [])
         )
     );
+    // attach documents
+    const withDocs = await attachDocumentsToStudents(formatted);
+    return withDocs;
+};
+
+// fetch documents for students and attach to response objects
+const attachDocumentsToStudents = async (studentRows) => {
+    if (!studentRows || studentRows.length === 0) return studentRows;
+    const ids = studentRows.map(s => s.id);
+    const docs = await query('SELECT student_id, name, url FROM student_documents WHERE student_id IN (?)', [ids]);
+    const byId = new Map();
+    for (const d of docs) {
+        const list = byId.get(d.student_id) || [];
+        list.push({ name: d.name, url: d.url });
+        byId.set(d.student_id, list);
+    }
+    return studentRows.map(s => ({ ...s, documents: byId.get(s.id) || [] }));
 };
 
 // --- Controllers ---
@@ -315,8 +333,28 @@ exports.createStudent = async (req, res) => {
     try {
         const studentData = await mapStudentToDb(req.body);
         const result = await query('INSERT INTO students SET ?', [studentData]);
-        await replacePackHistory(result.insertId, req.body);
-        const students = await getStudentsWithHistory('WHERE s.id = ?', [result.insertId], { limit: 1 });
+        const newId = result.insertId;
+        await replacePackHistory(newId, req.body);
+        // insert documents if provided (array of {name, url})
+        if (Array.isArray(req.body.documents) && req.body.documents.length > 0) {
+            for (const doc of req.body.documents) {
+                if (!doc) continue;
+                let url = null;
+                if (typeof doc.url === 'string' && doc.url.startsWith('http')) {
+                    url = doc.url;
+                } else if (typeof doc.dataUrl === 'string' && doc.dataUrl.startsWith('data:')) {
+                    try {
+                        url = await uploadBase64ToR2(doc.dataUrl, 'student_documents');
+                    } catch (err) {
+                        console.warn('Failed to upload document to R2:', err.message || err);
+                        continue;
+                    }
+                }
+                if (!url) continue;
+                await query('INSERT INTO student_documents (student_id, name, url) VALUES (?, ?, ?)', [newId, doc.name || 'document', url]);
+            }
+        }
+        const students = await getStudentsWithHistory('WHERE s.id = ?', [newId], { limit: 1 });
         return res.json(students[0]);
     } catch (error) {
         return res.status(500).json({ error: error.sqlMessage || error.message });
@@ -333,6 +371,36 @@ exports.updateStudent = async (req, res) => {
         const existingPhotoUrl = existing[0].photo_path || null;
         const studentData = await mapStudentToDb(req.body, existingPhotoUrl);
         await query('UPDATE students SET ? WHERE id = ?', [studentData, req.params.id]);
+        // replace documents: simple approach — delete existing and insert provided list
+        if (Array.isArray(req.body.documents)) {
+            // fetch existing docs so we can delete their files from R2
+            try {
+                const existingDocs = await query('SELECT id, url FROM student_documents WHERE student_id = ?', [req.params.id]);
+                for (const d of existingDocs) {
+                    try { await deleteFromR2(d.url); } catch (err) { console.warn('Failed to delete old document from R2:', err && err.message ? err.message : err); }
+                }
+            } catch (err) {
+                console.warn('Failed to fetch existing documents for deletion', err && err.message ? err.message : err);
+            }
+
+            await query('DELETE FROM student_documents WHERE student_id = ?', [req.params.id]);
+            for (const doc of req.body.documents) {
+                if (!doc) continue;
+                let url = null;
+                if (typeof doc.url === 'string' && doc.url.startsWith('http')) {
+                    url = doc.url;
+                } else if (typeof doc.dataUrl === 'string' && doc.dataUrl.startsWith('data:')) {
+                    try {
+                        url = await uploadBase64ToR2(doc.dataUrl, 'student_documents');
+                    } catch (err) {
+                        console.warn('Failed to upload document to R2:', err && err.message ? err.message : err);
+                        continue;
+                    }
+                }
+                if (!url) continue;
+                await query('INSERT INTO student_documents (student_id, name, url) VALUES (?, ?, ?)', [req.params.id, doc.name || 'document', url]);
+            }
+        }
         await replacePackHistory(req.params.id, req.body);
         const students = await getStudentsWithHistory('WHERE s.id = ?', [req.params.id], { limit: 1 });
         return res.json(students[0]);

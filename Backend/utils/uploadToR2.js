@@ -29,7 +29,6 @@ async function uploadBase64ToR2(base64String, folder = 'students') {
             ContentType: mimeType,
         })
     );
-
     return `${PUBLIC_URL}/${filename}`;
 }
 

@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS students (
     pack_history_year   SMALLINT UNSIGNED,
     -- R2 stores the full public URL (e.g. https://pub-xxx.r2.dev/students/uuid.jpg)
     photo_path          TEXT,
+    -- JSON array of attached documents: [{ name: '...', url: 'https://...' }, ...]
+    -- Stored in a separate table `student_documents` for normalized storage.
     is_active           TINYINT(1) NOT NULL DEFAULT 1,
     created_by          VARCHAR(100),
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -65,6 +67,16 @@ CREATE TABLE IF NOT EXISTS students (
     FOREIGN KEY (ministry_id) REFERENCES ministries(id) ON DELETE SET NULL,
     FOREIGN KEY (church_id)   REFERENCES churches(id)   ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+    -- ── Student Documents ───────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS student_documents (
+        id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        student_id  INT UNSIGNED NOT NULL,
+        name        VARCHAR(255) NOT NULL,
+        url         TEXT NOT NULL,
+        created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB;
 
 -- ── Pack Distributions ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS pack_distributions (

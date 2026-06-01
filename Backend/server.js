@@ -18,6 +18,10 @@ app.use((req, res, next) => {
     next();
 });
 
+// Run lightweight migrations to ensure required tables exist
+const { runMigrations } = require('./migrations/ensureTables');
+runMigrations().catch(err => console.error('Migration error (continuing):', err && err.message ? err.message : err));
+
 // Routes
 const studentRoutes = require('./routes/studentRoutes');
 const ministryRoutes = require('./routes/ministryRoutes');

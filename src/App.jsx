@@ -166,6 +166,27 @@ function StudentDetail({ studentId, onBack }) {
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.address || 'N/A'}</div>
               </div>
             </div>
+            {student.documents && student.documents.length > 0 ? (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: '12px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>Attached Documents</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {student.documents.map((doc, i) => (
+                    <div key={i} style={{ width: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                      {doc.url && String(doc.url).startsWith('data:image') ? (
+                        <a href={doc.url} target="_blank" rel="noreferrer">
+                          <img src={doc.url} alt={doc.name} style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }} />
+                        </a>
+                      ) : (
+                        <a href={doc.url} target="_blank" rel="noreferrer" style={{ display: 'flex', width: 120, height: 80, alignItems: 'center', justifyContent: 'center', background: 'var(--bg3)', borderRadius: 8 }}>
+                          <i className="fas fa-file-pdf" style={{ fontSize: 28 }}></i>
+                        </a>
+                      )}
+                      <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--fg3)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{doc.name}</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="card">
