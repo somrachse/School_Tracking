@@ -7,7 +7,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Check deploy secrets
+        run: |
+          echo "Checking SSH deploy secrets..."
+          test_v="${{ secrets.SERVER_IP }}"
+          test_u="${{ secrets.SSH_USERNAME }}"
+          test_k="${{ secrets.SSH_PRIVATE_KEY }}"
+          if [ -z "$test_v" ] || [ -z "$test_u" ] || [ -z "$test_k" ]; then
+            echo "One or more required secrets are missing. Server deploy will be skipped.";
+          else
+            echo "All required secrets appear present.";
+          fi
+
       - name: Deploy to Server
+        if: ${{ secrets.SERVER_IP != '' && secrets.SSH_USERNAME != '' && secrets.SSH_PRIVATE_KEY != '' }}
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -45,3 +58,12 @@ jobs:
             npm run build
             
             echo "Deployment Complete!"
+
+      - name: Skip server deploy (missing secrets)
+        if: ${{ secrets.SERVER_IP == '' || secrets.SSH_USERNAME == '' || secrets.SSH_PRIVATE_KEY == '' }}
+        run: |
+          echo "--------------------------------------------------"
+          echo "Skipping SSH deploy: one or more secrets are missing."
+          echo "Please add these repository secrets: SERVER_IP, SSH_USERNAME, SSH_PRIVATE_KEY"
+          echo "Repo settings → Settings → Secrets and variables → Actions -> New repository secret"
+          echo "--------------------------------------------------"
