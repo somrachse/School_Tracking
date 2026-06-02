@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Deploy to DigitalOcean
 on:
   push:
@@ -6,40 +7,42 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      SERVER_IP: "${{ secrets.SERVER_IP }}"
+      SSH_USERNAME: "${{ secrets.SSH_USERNAME }}"
+      SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
     steps:
       - name: Check deploy secrets
+        id: check_secrets
         run: |
           echo "Checking SSH deploy secrets..."
-          test_v="${{ secrets.SERVER_IP }}"
-          test_u="${{ secrets.SSH_USERNAME }}"
-          test_k="${{ secrets.SSH_PRIVATE_KEY }}"
-          if [ -z "$test_v" ] || [ -z "$test_u" ] || [ -z "$test_k" ]; then
-            echo "One or more required secrets are missing. Server deploy will be skipped.";
+          if [ -z "$SERVER_IP" ] || [ -z "$SSH_USERNAME" ] || [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "secrets_present=false" >> $GITHUB_OUTPUT
           else
-            echo "All required secrets appear present.";
+            echo "secrets_present=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Deploy to Server
-        if: ${{ secrets.SERVER_IP != '' && secrets.SSH_USERNAME != '' && secrets.SSH_PRIVATE_KEY != '' }}
+        if: "${{ steps.check_secrets.outputs.secrets_present == 'true' }}"
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: "${{ env.SERVER_IP }}"
+          username: "${{ env.SSH_USERNAME }}"
+          key: "${{ env.SSH_PRIVATE_KEY }}"
           script: |
             cd /var/www/school-pack-tracker
-            
+
             # Stash any local changes that shouldn't be tracked (just in case)
             git stash
-            
+
             # Pull latest changes from main
             git pull origin main
-            
+
             # Deploy Backend
             echo "Building backend..."
             cd Backend
             npm install
-            
+
             # Start or Restart PM2 Process
             pm2 describe backend-api > /dev/null
             if [ $? -eq 0 ]; then
@@ -47,20 +50,20 @@ jobs:
             else
                 pm2 start server.js --name "backend-api"
             fi
-            
+
             # Save PM2 process list to auto-start on server reboot
             pm2 save
-            
+
             # Deploy Frontend
             echo "Building frontend..."
             cd ..
             npm install
             npm run build
-            
+
             echo "Deployment Complete!"
 
       - name: Skip server deploy (missing secrets)
-        if: ${{ secrets.SERVER_IP == '' || secrets.SSH_USERNAME == '' || secrets.SSH_PRIVATE_KEY == '' }}
+        if: "${{ steps.check_secrets.outputs.secrets_present != 'true' }}"
         run: |
           echo "--------------------------------------------------"
           echo "Skipping SSH deploy: one or more secrets are missing."
