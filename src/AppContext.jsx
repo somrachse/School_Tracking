@@ -55,6 +55,7 @@ export function AppProvider({ children }) {
   const [cameraModal, setCameraModal] = useState(false);
   const [packModal, setPackModal] = useState({ open: false, studentId: null, editYear: null });
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', msg: '', onConfirm: null });
+  const [docViewer, setDocViewer] = useState({ open: false, url: '', name: '' });
 
   const showToast = (msg, type = 'success') => {
     const id = Date.now();
@@ -271,7 +272,7 @@ export function AppProvider({ children }) {
       currentView, setCurrentView, editingId, setEditingId,
       currentPhoto, setCurrentPhoto, currentDocs, setCurrentDocs, cameraTarget, setCameraTarget, toasts, showToast,
       cameraModal, setCameraModal, packModal, setPackModal,
-      confirmModal, setConfirmModal, toggleTheme
+      confirmModal, setConfirmModal, docViewer, setDocViewer, toggleTheme
       , theme
     }}>
       {children}

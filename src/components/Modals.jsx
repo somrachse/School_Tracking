@@ -378,3 +378,36 @@ export function CameraModal() {
     </div>
   );
 }
+
+export function DocumentModal() {
+  const { docViewer, setDocViewer } = useApp();
+  if (!docViewer || !docViewer.open) return null;
+  const { url, name } = docViewer;
+  const s = String(url || '').toLowerCase();
+  const isImage = s.startsWith('data:image') || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(s);
+  const isPdf = s.startsWith('data:application/pdf') || s.endsWith('.pdf') || /\.pdf(\?|$)/i.test(s);
+
+  return (
+    <div className="modal-overlay" onClick={() => setDocViewer({ open: false, url: '', name: '' })}>
+      <div className="modal-box" style={{ maxWidth: '950px', width: '94%' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontSize: '16px' }}>{name || 'Document'}</h3>
+          <button onClick={() => setDocViewer({ open: false, url: '', name: '' })} className="btn btn-secondary btn-icon" style={{ width: '36px', height: '36px' }}><i className="fas fa-times"></i></button>
+        </div>
+        <div style={{ padding: '16px', textAlign: 'center' }}>
+          {isImage ? (
+            <img src={url} alt={name} style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 8 }} />
+          ) : isPdf ? (
+            <iframe title={name || 'pdf'} src={url} style={{ width: '100%', height: '80vh', border: 0 }} />
+          ) : url ? (
+            <div>
+              <a href={url} target="_blank" rel="noreferrer" className="btn btn-primary">Open Document in New Tab</a>
+            </div>
+          ) : (
+            <div style={{ color: 'var(--fg3)' }}>No preview available</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

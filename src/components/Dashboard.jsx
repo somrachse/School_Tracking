@@ -1,6 +1,6 @@
 import { useApp, calcAge, getLevel, packStatus, completeDistributions, totalDistributions } from '../AppContext';
 
-export default function Dashboard() {
+export default function Dashboard({ onViewDetail }) {
   const { students, settings } = useApp();
   const total = students.length;
   const maleCount = students.filter(s => s.gender === 'Male').length;
@@ -139,7 +139,7 @@ export default function Dashboard() {
       <div className="card"><h3 style={{ fontSize: '15px', marginBottom: '16px' }}>Recently Added</h3>
         {recent.length === 0 ? <div className="empty-state"><i className="fas fa-user-plus"></i><p>No students registered yet</p></div> : 
           recent.map(s => (
-            <div key={s.id} className="student-card" onClick={() => { /* Navigate to detail handled in App */ }}>
+            <div key={s.id} className="student-card" onClick={() => { if (typeof onViewDetail === 'function') onViewDetail(s.id); }}>
               <div className="student-photo">{s.photo ? <img src={s.photo} alt="" /> : <i className="fas fa-user"></i>}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>

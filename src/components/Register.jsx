@@ -30,7 +30,7 @@ const CAMBODIA_ADDRESS_OPTIONS = [
 ];
 
 export default function Register() {
-  const { students, addStudent, updateStudent, settings, editingId, setEditingId, setCurrentView, currentPhoto, setCurrentPhoto, setCurrentDocs, currentDocs, setCameraModal, setCameraTarget, showToast } = useApp();
+  const { students, addStudent, updateStudent, settings, editingId, setEditingId, setCurrentView, currentPhoto, setCurrentPhoto, setCurrentDocs, currentDocs, setCameraModal, setCameraTarget, showToast, setDocViewer } = useApp();
   const currentYear = new Date().getFullYear();
   const [form, setForm] = useState({
     name: '',
@@ -329,24 +329,6 @@ export default function Register() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
           <div>
-            {currentDocs && currentDocs.length > 0 ? (
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                {currentDocs.map((doc, idx) => (
-                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 88 }}>
-                    {doc.dataUrl && String(doc.dataUrl).startsWith('data:image') ? (
-                      <img src={doc.dataUrl} alt={doc.name} style={{ width: 88, height: 56, objectFit: 'cover', borderRadius: 6 }} />
-                    ) : (
-                      <div style={{ width: 88, height: 56, borderRadius: 6, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <i className="fas fa-file-pdf" style={{ fontSize: 20 }}></i>
-                      </div>
-                    )}
-                    <div style={{ fontSize: 11, color: 'var(--fg3)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{doc.name}</div>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeDoc(idx)} style={{ marginTop: 6 }}><i className="fas fa-trash"></i></button>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
             <label className="field-label">Church</label>
             <select className="input-field" value={form.church} onChange={e => setForm({...form, church: e.target.value})}><option value="">Select Church</option>{settings.churches.map(c => <option key={c} value={c}>{c}</option>)}</select>
           </div>
@@ -412,16 +394,18 @@ export default function Register() {
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setCameraTarget('document'); setCameraModal(true); }}><i className="fas fa-camera"></i> Scan</button>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: 8 }}>
-            {currentDocs.length === 0 ? (
+                {currentDocs.length === 0 ? (
               <div style={{ color: 'var(--fg3)' }}>No documents attached</div>
             ) : currentDocs.map((doc, idx) => (
               <div key={idx} style={{ width: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                 {doc.dataUrl && String(doc.dataUrl).startsWith('data:image') ? (
-                  <img src={doc.dataUrl} alt={doc.name} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
+                  <button type="button" onClick={() => setDocViewer({ open: true, url: doc.dataUrl, name: doc.name })} style={{ border: 0, padding: 0, background: 'transparent', cursor: 'pointer' }}>
+                    <img src={doc.dataUrl} alt={doc.name} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
+                  </button>
                 ) : (
-                  <div style={{ width: 120, height: 120, borderRadius: 8, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <button type="button" onClick={() => setDocViewer({ open: true, url: doc.dataUrl, name: doc.name })} style={{ width: 120, height: 120, borderRadius: 8, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
                     <i className="fas fa-file-pdf" style={{ fontSize: 28 }}></i>
-                  </div>
+                  </button>
                 )}
                 <div style={{ fontSize: 12, color: 'var(--fg3)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{doc.name}</div>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeDoc(idx)}><i className="fas fa-trash"></i></button>

@@ -15,7 +15,7 @@ R2_ACCOUNT_ID=b13fd185a4e39a4f8c1ce2b8b6c93f43
 R2_ACCESS_KEY_ID=5592880f3862e6baaa30863cbc0423a5
 R2_SECRET_ACCESS_KEY=ac8fcd544d9cef9aaa5bec6be6ca3f193be1d81825ac501bb4e78c6dd52868e9
 R2_BUCKET_NAME=schoolpack-storage
-R2_PUBLIC_URL=https://schooltracking.online/schoolpack-storage
+R2_PUBLIC_URL=https://pub-ebb911133a6c4735b93157a17d1412a6.r2.dev
 `;
 
 conn.on('ready', () => {

@@ -5,10 +5,10 @@ import Dashboard from './components/Dashboard';
 import Students from './components/Students';
 import Register from './components/Register';
 import Settings from './components/Settings';
-import { ToastContainer, CameraModal } from './components/Modals';
+import { ToastContainer, CameraModal, DocumentModal } from './components/Modals';
 
 function StudentDetail({ studentId, onBack }) {
-  const { students, updateStudent, deleteStudent, showToast, setEditingId, setCurrentView } = useApp();
+  const { students, updateStudent, deleteStudent, showToast, setEditingId, setCurrentView, setDocViewer } = useApp();
   const student = students.find((item) => item.id === studentId);
 
   if (!student) {
@@ -173,15 +173,15 @@ function StudentDetail({ studentId, onBack }) {
                   {student.documents.map((doc, i) => (
                     <div key={i} style={{ width: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                       {doc.url && String(doc.url).startsWith('data:image') ? (
-                        <a href={doc.url} target="_blank" rel="noreferrer">
+                        <button type="button" onClick={() => setDocViewer({ open: true, url: doc.url, name: doc.name })} style={{ border: 0, padding: 0, background: 'transparent', cursor: 'pointer' }}>
                           <img src={doc.url} alt={doc.name} style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8 }} />
-                        </a>
+                        </button>
                       ) : (
-                        <a href={doc.url} target="_blank" rel="noreferrer" style={{ display: 'flex', width: 120, height: 80, alignItems: 'center', justifyContent: 'center', background: 'var(--bg3)', borderRadius: 8 }}>
+                        <button type="button" onClick={() => setDocViewer({ open: true, url: doc.url, name: doc.name })} style={{ display: 'flex', width: 120, height: 80, alignItems: 'center', justifyContent: 'center', background: 'var(--bg3)', borderRadius: 8, border: 'none', cursor: 'pointer' }}>
                           <i className="fas fa-file-pdf" style={{ fontSize: 28 }}></i>
-                        </a>
+                        </button>
                       )}
-                      <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--fg3)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{doc.name}</a>
+                      <button type="button" onClick={() => setDocViewer({ open: true, url: doc.url, name: doc.name })} style={{ fontSize: 12, color: 'var(--fg3)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', background: 'transparent', border: 0, cursor: 'pointer' }}>{doc.name}</button>
                     </div>
                   ))}
                 </div>
@@ -298,21 +298,24 @@ function StudentDetail({ studentId, onBack }) {
 function AppContent() {
   const { currentView, setCurrentView } = useApp();
   const [detailId, setDetailId] = useState(null);
+  const [prevView, setPrevView] = useState(null);
 
   const handleNavigate = (view) => {
     setDetailId(null);
+    setPrevView(null);
     setCurrentView(view);
   };
 
   const openStudentDetail = (id) => {
-    setCurrentView('students');
+    // remember where we came from so Back can restore it
+    setPrevView(currentView);
     setDetailId(id);
   };
 
   const renderView = () => {
-    if (detailId) return <StudentDetail studentId={detailId} onBack={() => setDetailId(null)} />;
+    if (detailId) return <StudentDetail studentId={detailId} onBack={() => { setDetailId(null); setPrevView(null); }} />;
     switch (currentView) {
-      case 'dashboard': return <Dashboard />;
+      case 'dashboard': return <Dashboard onViewDetail={openStudentDetail} />;
       case 'students': return <Students onViewDetail={openStudentDetail} />;
       case 'register': return <Register />;
       case 'settings': return <Settings />;
@@ -322,13 +325,14 @@ function AppContent() {
 
   return (
     <div className="main-wrap">
-      <Layout activeView={detailId ? 'students' : currentView} onNavigate={handleNavigate} />
+      <Layout activeView={detailId ? (prevView || 'students') : currentView} onNavigate={handleNavigate} />
       <main className="main-content">
         <div className="container">
           {renderView()}
         </div>
       </main>
       <CameraModal />
+      <DocumentModal />
       <ToastContainer />
     </div>
   );
