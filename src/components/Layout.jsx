@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useApp } from '../AppContext';
 
 export default function Layout({ activeView, onNavigate }) {
   const { currentView, setCurrentView, toggleTheme, theme } = useApp();
   const isDark = (theme || 'dark') === 'dark';
   const selectedView = activeView || currentView;
+  const [logoVisible, setLogoVisible] = useState(true);
 
   const handleNavigate = (view) => {
     if (onNavigate) {
@@ -24,8 +26,19 @@ export default function Layout({ activeView, onNavigate }) {
     <>
       <aside className="sidebar no-print">
         <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--accent-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <i className="fas fa-backpack" style={{ color: 'var(--accent)', fontSize: '16px' }}></i>
+          {/** Logo: show image at natural aspect ratio (no rounded box) */}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {logoVisible ? (
+              <img
+                src="/img/FFCC.PNG"
+                alt="FFCC"
+                onLoad={() => setLogoVisible(true)}
+                onError={() => setLogoVisible(false)}
+                style={{ height: '36px', width: 'auto', objectFit: 'contain', display: 'block' }}
+              />
+            ) : (
+              <span style={{ color: 'var(--accent)', fontWeight: 800, fontSize: '14px', letterSpacing: '0.6px' }}>FFCC</span>
+            )}
           </div>
           <div>
             <div style={{ fontFamily: 'Kantumruy', fontWeight: 700, fontSize: '15px' }}>Pack Tracker</div>

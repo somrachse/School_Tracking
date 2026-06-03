@@ -119,6 +119,13 @@ label.field-label{display:block;font-size:12px;font-weight:600;color:var(--fg2);
 .student-row .student-id{font-weight:700;color:var(--accent);font-size:13px;}
 .student-row .student-name{display:flex;align-items:center;min-width:0;}
 .student-row .student-gender,.student-row .student-age,.student-row .student-grade{color:var(--fg3);font-size:13px;}
+
+/* Ensure numeric columns like Age are centered under their header */
+.student-header .student-age,
+.student-row .student-age{
+  justify-self: center;
+  text-align: center;
+}
 .student-row .student-status{justify-self:start;}
 .student-row .student-actions{justify-self:center;}
 .student-row .student-actions .btn-icon{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;}
@@ -130,9 +137,9 @@ label.field-label{display:block;font-size:12px;font-weight:600;color:var(--fg2);
 .action-menu .action-item.delete{color:var(--danger)}
 @media (max-width: 900px){
   .student-row,.student-header{grid-template-columns:34px 120px 1fr 90px 70px 70px 120px 40px;gap:8px;}
-  /* On narrower screens, show gender inline inside the name cell and hide the separate gender column */
-  .student-row .student-gender, .student-header .student-gender{display:none}
-  .student-gender-inline{display:block}
+  /* On narrower screens, display the separate Gender column and hide inline gender */
+  .student-row .student-gender, .student-header .student-gender{display:block; justify-self:center; text-align:center;}
+  .student-gender-inline{display:none}
   .student-name-main, .student-name-church{white-space:normal}
 }
 @media (max-width: 600px){
