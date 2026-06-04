@@ -37,6 +37,7 @@ const normalizeStudent = (student) => ({
   packYear: student.packYear === null || student.packYear === undefined ? '' : Number(student.packYear),
   packHistory: normalizePackHistory(student.packHistory, student.packYear),
   studentCode: student.studentCode || formatStudentCode(student.id),
+  studentType: student.studentType || '',
 });
 
 

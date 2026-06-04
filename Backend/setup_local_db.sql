@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS students (
     address             TEXT,
     future_dream        TEXT,
     role_position       VARCHAR(100),
+    student_type        VARCHAR(20),
     date_of_conversion  DATE,
     date_of_baptism     DATE,
     fathers_name        VARCHAR(255),

@@ -13,6 +13,7 @@ const HEADER_ALIASES = {
   address: ['address', 'city', 'province'],
   futureGoal: ['future goal', 'future dream', 'goal', 'future dream / goal'],
   rolePosition: ['role', 'position', 'role / position'],
+  studentType: ['new / old', 'student type', 'type', 'new old'],
   conversionDate: ['conversion date', 'date of conversion'],
   baptismDate: ['baptism date', 'date of baptism'],
   fatherName: ["father's name", 'father name'],
@@ -221,32 +222,33 @@ export default function Students({ onViewDetail }) {
 
     const rows = [
       [
-        'Student ID',
-        'Name',
-        'Age',
-        'Date of Birth',
-        'Gender',
-        'Grade',
-        'School',
-        'Church',
-        'Address',
-        'Future Dream / Goal',
-        'Role / Position',
-        'Date of Conversion',
-        'Date of Baptism',
-        "Father's Name",
-        "Father's Phone Number",
-        "Mother's Name",
-        "Mother's Phone Number",
-        'Guardian',
-        "Guardian's Phone Number",
+        'អត្តលេខសិស្ស',
+        'ឈ្មោះពេញ',
+        'អាយុ',
+        'ថ្ងៃខែឆ្នាំកំណើត',
+        'ភេទ',
+        'ថ្នាក់',
+        'សាលារៀន',
+        'ព្រះវិហារ/ក្រុមជំនុំ',
+        'អាស័យដ្ឋាន',
+        'ក្តីស្រមៃថ្ងៃអនាគត',
+        'តួនាទី',
+        'ថ្ងៃទទួលជឿព្រះ',
+        'ថ្ងៃទទួលពិធីជ្រមុជទឹក',
+        'ឈ្មោះឪពុក',
+        'លេខទូរស័ព្ទឪពុក',
+        'ឈ្មោះម្តាយ',
+        'លេខទូរស័ព្ទម្តាយ',
+        'អាណាព្យាបាល',
+        'លេខទូរស័ព្ទអាណាព្យាបាល',
+        'សិស្ស ថ្មី/ចាស់',
       ],
       ...filtered.map((student) => [
         student.student_id || formatStudentCode(student.id), // Prefer backend student_id, then formatted id
         student.name || '',
         calcAge(student.dob),
         student.dob || '',
-        student.gender || '',
+        student.gender === 'Male' ? 'ប្រុស' : student.gender === 'Female' ? 'ស្រី' : student.gender || '',
         student.grade || '',
         student.school || '',
         student.church || '',
@@ -261,6 +263,7 @@ export default function Students({ onViewDetail }) {
         student.motherPhone || '',
         student.guardianName || '',
         student.guardianPhone || '',
+        student.studentType === 'New' ? 'សិស្ស ថ្មី' : student.studentType === 'Old' ? 'សិស្ស ចាស់' : student.studentType || '',
       ]),
     ];
 
@@ -350,11 +353,11 @@ export default function Students({ onViewDetail }) {
       'Grade',
       'School',
       'Phone Number',
-      'Ministry',
+      'Role / Position',
       'Church',
       'Address',
       'Future Dream / Goal',
-      'Role / Position',
+      'New / Old',
       'Date of Conversion',
       'Date of Baptism',
       "Father's Name",
@@ -378,11 +381,11 @@ export default function Students({ onViewDetail }) {
       '7',
       'Phnom Penh High School',
       '012345678',
-      'Youth Ministry',
+      'Member',
       'Main Church',
       'Phnom Penh',
       'Teacher',
-      'Member',
+      'New',
       '',
       '',
       '',
@@ -430,7 +433,7 @@ export default function Students({ onViewDetail }) {
         genderRaw === 'm' || genderRaw === 'male' ? 'Male' : genderRaw === 'f' || genderRaw === 'female' ? 'Female' : '';
       const grade = Number.parseInt(String(getRowValue(rowMap, 'grade') || '').trim(), 10);
       const school = String(getRowValue(rowMap, 'school') || '').trim();
-      const ministry = String(getRowValue(rowMap, 'ministry') || '').trim();
+      const rolePosition = String(getRowValue(rowMap, 'rolePosition') || '').trim();
       const packYearRaw = Number.parseInt(String(getRowValue(rowMap, 'packYear') || '').trim(), 10);
       const packYear = Number.isNaN(packYearRaw) ? currentYear : packYearRaw;
       const statusItems = parsePackItemsFromStatus(getRowValue(rowMap, 'status'));
@@ -446,8 +449,8 @@ export default function Students({ onViewDetail }) {
           }
         : statusItems || { bag: false, uniforms: false, books: false };
 
-      if (!name || !dob || !gender || Number.isNaN(grade) || !school || !ministry) {
-        errors.push(`Row ${i + 1}: missing required data (name, dob, gender, grade, school, ministry).`);
+      if (!name || !dob || !gender || Number.isNaN(grade) || !school || !rolePosition) {
+        errors.push(`Row ${i + 1}: missing required data (name, dob, gender, grade, school, role / position).`);
         continue;
       }
 
@@ -458,11 +461,12 @@ export default function Students({ onViewDetail }) {
         grade,
         school,
         phone: String(getRowValue(rowMap, 'phone') || '').trim(),
-        ministry,
+        ministry: String(getRowValue(rowMap, 'ministry') || '').trim(),
         church: String(getRowValue(rowMap, 'church') || '').trim(),
         address: String(getRowValue(rowMap, 'address') || '').trim(),
         futureGoal: String(getRowValue(rowMap, 'futureGoal') || '').trim(),
-        rolePosition: String(getRowValue(rowMap, 'rolePosition') || '').trim(),
+        rolePosition,
+        studentType: String(getRowValue(rowMap, 'studentType') || '').trim(),
         conversionDate: formatDateValue(getRowValue(rowMap, 'conversionDate')),
         baptismDate: formatDateValue(getRowValue(rowMap, 'baptismDate')),
         fatherName: String(getRowValue(rowMap, 'fatherName') || '').trim(),

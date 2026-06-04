@@ -44,6 +44,7 @@ export default function Register() {
     address: '',
     futureGoal: '',
     rolePosition: '',
+    studentType: '',
     conversionDate: '',
     baptismDate: '',
     fatherName: '',
@@ -70,6 +71,7 @@ export default function Register() {
     address: student.address || '',
     futureGoal: student.futureGoal || '',
     rolePosition: student.rolePosition || '',
+    studentType: student.studentType || '',
     conversionDate: student.conversionDate || '',
     baptismDate: student.baptismDate || '',
     fatherName: student.fatherName || '',
@@ -93,6 +95,7 @@ export default function Register() {
     address: '',
     futureGoal: '',
     rolePosition: '',
+    studentType: '',
     conversionDate: '',
     baptismDate: '',
     fatherName: '',
@@ -311,70 +314,63 @@ export default function Register() {
               </div>
           </div>
           <div>
-            <div style={{ marginBottom: '12px' }}><label className="field-label">Full Name *</label><input type="text" className="input-field" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
+            <div style={{ marginBottom: '12px' }}><label className="field-label">ឈ្មោះពេញ*</label><input type="text" className="input-field" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div><label className="field-label">Date of Birth *</label><input type="date" className="input-field" required value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} /></div>
-              <div><label className="field-label">Gender *</label><select className="input-field" required value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}><option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+              <div><label className="field-label">ថ្ងៃខែឆ្នាំកំណើត *</label><input type="date" className="input-field" required value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} /></div>
+              <div><label className="field-label">ភេទ *</label><select className="input-field" required value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}><option value="">ជ្រើសរើស</option><option value="Male">ប្រុស</option><option value="Female">ស្រី</option></select></div>
             </div>
           </div>
         </div>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Grade *</label><select className="input-field" required value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}><option value="">Select Grade</option>{Array.from({length: 12}, (_, i) => i + 1).map(g => <option key={g} value={g}>Grade {g}</option>)}</select></div>
-          <div><label className="field-label">School *</label><input type="text" className="input-field" required value={form.school} onChange={e => setForm({...form, school: e.target.value})} /></div>
+          <div><label className="field-label">ថ្នាក់ *</label><select className="input-field" required value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}><option value=""></option>{Array.from({length: 12}, (_, i) => i + 1).map(g => <option key={g} value={g}>Grade {g}</option>)}</select></div>
+          <div><label className="field-label">សាលារៀន *</label><input type="text" className="input-field" required value={form.school} onChange={e => setForm({...form, school: e.target.value})} /></div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Phone Number</label><input type="tel" className="input-field" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
-          <div><label className="field-label">Ministry *</label><select className="input-field" required value={form.ministry} onChange={e => setForm({...form, ministry: e.target.value})}><option value="">Select Ministry</option>{settings.ministries.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+          <div><label className="field-label">លេខទូរសព្ទផ្ទាល់ខ្លួន</label><input type="tel" className="input-field" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
+          <div><label className="field-label">តួនាទី *</label><select className="input-field" required value={form.rolePosition} onChange={e => setForm({...form, rolePosition: e.target.value})}><option value="">Select Role / Position</option><option value="កុមារ">កុមារ</option><option value="យុវជន">យុវជន</option></select></div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
           <div>
-            <label className="field-label">Church</label>
+            <label className="field-label">ព្រះវិហារ/ក្រុមជុំនំ</label>
             <select className="input-field" value={form.church} onChange={e => setForm({...form, church: e.target.value})}><option value="">Select Church</option>{settings.churches.map(c => <option key={c} value={c}>{c}</option>)}</select>
           </div>
           <div>
-            <label className="field-label">Address</label>
-            <input
-              type="text"
-              className="input-field"
-              list="cambodia-addresses"
-              placeholder="Choose or type city, province"
-              value={form.address}
-              onChange={e => setForm({...form, address: e.target.value})}
-            />
-            <datalist id="cambodia-addresses">
-              {CAMBODIA_ADDRESS_OPTIONS.map(address => <option key={address} value={address} />)}
-            </datalist>
+            <label className="field-label">អាស័យដ្ឋាន *</label>
+            <select className="input-field" value={form.address} onChange={e => setForm({...form, address: e.target.value})}>
+              <option value="">ជ្រើសរើសអាស័យដ្ឋាន</option>
+              {CAMBODIA_ADDRESS_OPTIONS.map(address => <option key={address} value={address}>{address}</option>)}
+            </select>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Future Dream / Goal</label><input type="text" className="input-field" value={form.futureGoal} onChange={e => setForm({...form, futureGoal: e.target.value})} /></div>
-          <div><label className="field-label">Role / Position</label><input type="text" className="input-field" value={form.rolePosition} onChange={e => setForm({...form, rolePosition: e.target.value})} /></div>
+          <div><label className="field-label">ក្តីស្រមៃថ្ងៃនាគត</label><input type="text" className="input-field" value={form.futureGoal} onChange={e => setForm({...form, futureGoal: e.target.value})} /></div>
+          <div><label className="field-label">សិស្ស ថ្មី/ចាស់</label><select className="input-field" value={form.studentType} onChange={e => setForm({...form, studentType: e.target.value})}><option value="">Select</option><option value="New">សិស្ស ថ្មី</option><option value="Old">សិស្ស ចាស់</option></select></div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Date of Conversion</label><input type="date" className="input-field" value={form.conversionDate} onChange={e => setForm({...form, conversionDate: e.target.value})} /></div>
-          <div><label className="field-label">Date of Baptism</label><input type="date" className="input-field" value={form.baptismDate} onChange={e => setForm({...form, baptismDate: e.target.value})} /></div>
+          <div><label className="field-label">ថ្ងៃទទួលជឿព្រះ</label><input type="date" className="input-field" value={form.conversionDate} onChange={e => setForm({...form, conversionDate: e.target.value})} /></div>
+          <div><label className="field-label">ថ្ងៃទទួលពិធីជ្រមុជទឹក</label><input type="date" className="input-field" value={form.baptismDate} onChange={e => setForm({...form, baptismDate: e.target.value})} /></div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Father's Name</label><input type="text" className="input-field" value={form.fatherName} onChange={e => setForm({...form, fatherName: e.target.value})} /></div>
-          <div><label className="field-label">Father's Phone Number</label><input type="tel" className="input-field" value={form.fatherPhone} onChange={e => setForm({...form, fatherPhone: e.target.value})} /></div>
+          <div><label className="field-label">ឈ្មោះឪពុក</label><input type="text" className="input-field" value={form.fatherName} onChange={e => setForm({...form, fatherName: e.target.value})} /></div>
+          <div><label className="field-label">លេខទូរសព្ទ​ឪពុក</label><input type="tel" className="input-field" value={form.fatherPhone} onChange={e => setForm({...form, fatherPhone: e.target.value})} /></div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Mother's Name</label><input type="text" className="input-field" value={form.motherName} onChange={e => setForm({...form, motherName: e.target.value})} /></div>
-          <div><label className="field-label">Mother's Phone Number</label><input type="tel" className="input-field" value={form.motherPhone} onChange={e => setForm({...form, motherPhone: e.target.value})} /></div>
+          <div><label className="field-label">ឈ្មោះម្តាយ</label><input type="text" className="input-field" value={form.motherName} onChange={e => setForm({...form, motherName: e.target.value})} /></div>
+          <div><label className="field-label">លេខទូរសព្ទ​ម្តាយ</label><input type="tel" className="input-field" value={form.motherPhone} onChange={e => setForm({...form, motherPhone: e.target.value})} /></div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">Guardian</label><input type="text" className="input-field" value={form.guardianName} onChange={e => setForm({...form, guardianName: e.target.value})} /></div>
-          <div><label className="field-label">Guardian's Phone Number</label><input type="tel" className="input-field" value={form.guardianPhone} onChange={e => setForm({...form, guardianPhone: e.target.value})} /></div>
+          <div><label className="field-label">អាណាព្យាបាល</label><input type="text" className="input-field" value={form.guardianName} onChange={e => setForm({...form, guardianName: e.target.value})} /></div>
+          <div><label className="field-label">លេខទូរសព្ទ​អាណាព្យាបាល</label><input type="tel" className="input-field" value={form.guardianPhone} onChange={e => setForm({...form, guardianPhone: e.target.value})} /></div>
         </div>
 
         <div style={{ marginBottom: '24px', maxWidth: '220px' }}>
-          <label className="field-label">Pack History Year *</label>
+          <label className="field-label">ឆ្នាំទទួលកញ្ចប់សិក្សា *</label>
           <input
             type="number"
             className="input-field"

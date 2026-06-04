@@ -143,7 +143,7 @@ export default function Dashboard({ onViewDetail }) {
               <div className="student-photo">{s.photo ? <img src={s.photo} alt="" /> : <i className="fas fa-user"></i>}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
-                <div style={{ fontSize: '12px', color: 'var(--fg3)' }}>Grade {s.grade} · {s.ministry}</div>
+                <div style={{ fontSize: '12px', color: 'var(--fg3)' }}>Grade {s.grade} · {s.rolePosition || 'No role'}</div>
               </div>
               <span className={`badge ${packStatus(s)==='complete'?'badge-success':packStatus(s)==='partial'?'badge-warn':'badge-info'}`}>{packStatus(s)==='complete'?'Complete':packStatus(s)==='partial'?'Partial':'Pending'}</span>
             </div>

@@ -65,6 +65,8 @@ function StudentDetail({ studentId, onBack }) {
   const badgeClass =
     status === 'complete' ? 'badge-success' : status === 'partial' ? 'badge-warn' : 'badge-info';
   const badgeText = status === 'complete' ? 'Complete' : status === 'partial' ? 'Partial' : 'Pending';
+  const genderText = student.gender === 'Male' ? 'ប្រុស' : student.gender === 'Female' ? 'ស្រី' : student.gender;
+  const studentTypeText = student.studentType === 'New' ? 'សិស្ស ថ្មី' : student.studentType === 'Old' ? 'សិស្ស ចាស់' : student.studentType;
 
   return (
     <div className="fade-in">
@@ -111,7 +113,7 @@ function StudentDetail({ studentId, onBack }) {
               {student.studentCode || formatStudentCode(student.id)}
             </p>
             <p style={{ color: 'var(--fg3)', marginTop: '6px' }}>
-              Grade {student.grade} • {getLevelLabel(student.grade)} • Age {age}
+              ថ្នាក់ទី {student.grade} • {getLevelLabel(student.grade)} • អាយុ {age}
             </p>
             <div style={{ marginTop: '12px' }}>
               <button
@@ -127,15 +129,15 @@ function StudentDetail({ studentId, onBack }) {
 
           <div style={{ marginTop: '20px', display: 'grid', gap: '12px' }}>
             <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>School</div>
+              <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>សាលារៀន</div>
               <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.school || 'N/A'}</div>
             </div>
             <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Ministry</div>
-              <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.ministry || 'N/A'}</div>
+              <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>តួនាទី</div>
+              <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.rolePosition || 'N/A'}</div>
             </div>
             <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Church</div>
+              <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ព្រះវិហារ/ក្រុមជំនុំ</div>
               <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.church || 'N/A'}</div>
             </div>
           </div>
@@ -143,26 +145,26 @@ function StudentDetail({ studentId, onBack }) {
 
         <div style={{ display: 'grid', gap: '16px' }}>
           <div className="card">
-            <h3 style={{ fontSize: '16px', marginBottom: '14px' }}>Student Information</h3>
+            <h3 style={{ fontSize: '16px', marginBottom: '14px' }}>ព័ត៌មានសិស្ស</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Student ID</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>អត្តលេខសិស្ស</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.studentCode || formatStudentCode(student.id)}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Gender</div>
-                <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.gender || 'N/A'}</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ភេទ</div>
+                <div style={{ marginTop: '4px', fontWeight: 600 }}>{genderText || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Date of Birth</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ថ្ងៃខែឆ្នាំកំណើត</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.dob || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Phone</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>លេខទូរស័ព្ទផ្ទាល់ខ្លួន</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.phone || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Full Address</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>អាស័យដ្ឋាន</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.address || 'N/A'}</div>
               </div>
             </div>
@@ -190,46 +192,46 @@ function StudentDetail({ studentId, onBack }) {
           </div>
 
           <div className="card">
-            <h3 style={{ fontSize: '16px', marginBottom: '14px' }}>Family And Goal</h3>
+            <h3 style={{ fontSize: '16px', marginBottom: '14px' }}>គ្រួសារ និង គោលដៅ</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Future Dream / Goal</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ក្តីស្រមៃថ្ងៃអនាគត</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.futureGoal || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Role / Position</div>
-                <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.rolePosition || 'N/A'}</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>សិស្ស ថ្មី/ចាស់</div>
+                <div style={{ marginTop: '4px', fontWeight: 600 }}>{studentTypeText || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Date of Conversion</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ថ្ងៃទទួលជឿព្រះ</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.conversionDate || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Date of Baptism</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ថ្ងៃទទួលពិធីជ្រមុជទឹក</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.baptismDate || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Father's Name</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ឈ្មោះឪពុក</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.fatherName || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Father's Phone Number</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>លេខទូរស័ព្ទឪពុក</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.fatherPhone || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Mother's Name</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>ឈ្មោះម្តាយ</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.motherName || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Mother's Phone Number</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>លេខទូរស័ព្ទម្តាយ</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.motherPhone || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Guardian</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>អាណាព្យាបាល</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.guardianName || 'N/A'}</div>
               </div>
               <div style={{ padding: '12px', background: 'var(--bg3)', borderRadius: '10px' }}>
-                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>Guardian's Phone Number</div>
+                <div style={{ fontSize: '11px', color: 'var(--fg3)', textTransform: 'uppercase', fontWeight: 600 }}>លេខទូរស័ព្ទអាណាព្យាបាល</div>
                 <div style={{ marginTop: '4px', fontWeight: 600 }}>{student.guardianPhone || 'N/A'}</div>
               </div>
             </div>

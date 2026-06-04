@@ -20,8 +20,22 @@ async function ensureStudentDocumentsTable() {
     }
 }
 
+async function ensureStudentTypeColumn() {
+    try {
+        const columns = await query("SHOW COLUMNS FROM students LIKE 'student_type'");
+        if (columns.length === 0) {
+            await query('ALTER TABLE students ADD COLUMN student_type VARCHAR(20) NULL AFTER role_position');
+            console.log('✅ Added students.student_type column');
+        }
+    } catch (err) {
+        console.error('❌ Failed to ensure students.student_type column:', err && err.message ? err.message : err);
+        throw err;
+    }
+}
+
 async function runMigrations() {
     await ensureStudentDocumentsTable();
+    await ensureStudentTypeColumn();
 }
 
 module.exports = { runMigrations };
