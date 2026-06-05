@@ -14,16 +14,10 @@ jobs:
     steps:
       - name: Check deploy secrets
         id: check_secrets
-        run: |
-          echo "Checking SSH deploy secrets..."
-          if [ -z "$SERVER_IP" ] || [ -z "$SSH_USERNAME" ] || [ -z "$SSH_PRIVATE_KEY" ]; then
-            echo "secrets_present=false" >> $GITHUB_OUTPUT
-          else
-            echo "secrets_present=true" >> $GITHUB_OUTPUT
-          fi
+        run: echo "secrets_present=${{ env.SERVER_IP != '' && env.SSH_USERNAME != '' && env.SSH_PRIVATE_KEY != '' }}" >> $GITHUB_OUTPUT
 
       - name: Deploy to Server
-        if: "${{ steps.check_secrets.outputs.secrets_present == 'true' }}"
+        if: steps.check_secrets.outputs.secrets_present == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: "${{ env.SERVER_IP }}"
@@ -63,7 +57,7 @@ jobs:
             echo "Deployment Complete!"
 
       - name: Skip server deploy (missing secrets)
-        if: "${{ steps.check_secrets.outputs.secrets_present != 'true' }}"
+        if: steps.check_secrets.outputs.secrets_present != 'true'
         run: |
           echo "--------------------------------------------------"
           echo "Skipping SSH deploy: one or more secrets are missing."

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../AppContext';
 
 const CAMBODIA_ADDRESS_OPTIONS = [
@@ -147,12 +147,13 @@ export default function Register() {
     loadExistingStudent(student.name);
   };
 
-  const lookupText = studentLookup.trim().toLowerCase();
-  const lookupSuggestions = lookupText
-    ? students
-        .filter((student) => student.name.trim().toLowerCase().includes(lookupText))
-        .slice(0, 6)
-    : [];
+  const lookupSuggestions = useMemo(() => {
+    const lookupText = studentLookup.trim().toLowerCase();
+    if (!lookupText) return [];
+    return students
+      .filter((student) => student.name.trim().toLowerCase().includes(lookupText))
+      .slice(0, 6);
+  }, [students, studentLookup]);
 
   const buildPackHistoryForYear = (existingHistory, year) => {
     const history = Array.isArray(existingHistory) ? [...existingHistory] : [];

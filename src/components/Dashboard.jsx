@@ -25,58 +25,57 @@ export default function Dashboard({ onViewDetail }) {
 
   const chartData = useMemo(() => {
     const packEntries = students.flatMap((s) => {
-    const history = Array.isArray(s.packHistory) ? s.packHistory : [];
-    const entries = history.map((entry) => ({
-      year: entry?.year ?? s.packYear ?? new Date().getFullYear(),
-      items: entry?.items || {},
-    }));
+      const history = Array.isArray(s.packHistory) ? s.packHistory : [];
+      const entries = history.map((entry) => ({
+        year: entry?.year ?? s.packYear ?? new Date().getFullYear(),
+        items: entry?.items || {},
+      }));
 
-    if (s.packYear && !entries.some((entry) => String(entry.year) === String(s.packYear))) {
-      entries.push({
-        year: s.packYear,
-        items: { bag: false, uniforms: false, books: false },
-      });
-    }
+      if (s.packYear && !entries.some((entry) => String(entry.year) === String(s.packYear))) {
+        entries.push({
+          year: s.packYear,
+          items: { bag: false, uniforms: false, books: false },
+        });
+      }
 
-    return entries;
-  });
+      return entries;
+    });
 
     const uniqueYears = Array.from(new Set(packEntries.map((e) => Number(e.year)).filter(Boolean))).sort((a, b) => a - b);
-  const currentYear = new Date().getFullYear();
-  const yearsToShow = uniqueYears.length > 0 ? uniqueYears : [currentYear];
+    const currentYear = new Date().getFullYear();
+    const yearsToShow = uniqueYears.length > 0 ? uniqueYears : [currentYear];
 
-  const actualByYear = {};
-  const registeredByYear = {};
-  packEntries.forEach((e) => {
-    const y = String(e.year);
-    const items = e.items || {};
-    registeredByYear[y] = (registeredByYear[y] || 0) + 1;
-    if (items.bag && items.uniforms && items.books) {
-      actualByYear[y] = (actualByYear[y] || 0) + 1;
-    }
-  });
+    const actualByYear = {};
+    const registeredByYear = {};
+    packEntries.forEach((e) => {
+      const y = String(e.year);
+      const items = e.items || {};
+      registeredByYear[y] = (registeredByYear[y] || 0) + 1;
+      if (items.bag && items.uniforms && items.books) {
+        actualByYear[y] = (actualByYear[y] || 0) + 1;
+      }
+    });
 
-  const settingsTargets = settings.distributionTargets || settings.targets || {};
-  const targetByYear = {};
-  yearsToShow.forEach((y) => {
-    const key = String(y);
-    if (settingsTargets && Object.prototype.hasOwnProperty.call(settingsTargets, key)) {
-      targetByYear[key] = Number(settingsTargets[key]) || 0;
-    } else {
-      targetByYear[key] = registeredByYear[key] || 0;
-    }
-  });
+    const settingsTargets = settings.distributionTargets || settings.targets || {};
+    const targetByYear = {};
+    yearsToShow.forEach((y) => {
+      const key = String(y);
+      if (settingsTargets && Object.prototype.hasOwnProperty.call(settingsTargets, key)) {
+        targetByYear[key] = Number(settingsTargets[key]) || 0;
+      } else {
+        targetByYear[key] = registeredByYear[key] || 0;
+      }
+    });
 
     return yearsToShow.map((y) => {
-    const key = String(y);
-    return {
-      year: y,
-      // show the actual year label for every column (instead of "Current")
-      label: String(y),
-      actual: actualByYear[key] || 0,
-      target: targetByYear[key] || 0,
-    };
-  });
+      const key = String(y);
+      return {
+        year: y,
+        label: String(y),
+        actual: actualByYear[key] || 0,
+        target: targetByYear[key] || 0,
+      };
+    });
   }, [students, settings]);
 
   const maxVal = Math.max(1, ...chartData.flatMap((d) => [d.actual, d.target]));
