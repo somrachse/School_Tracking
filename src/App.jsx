@@ -52,6 +52,22 @@ function StudentDetail({ studentId, onBack }) {
     });
   };
 
+  const handleToggleYearStatus = (targetYear) => {
+    const packHistoryCopy = [...(student.packHistory || [])];
+    const idx = packHistoryCopy.findIndex(e => e.year === targetYear);
+    if (idx === -1) return;
+    const entry = packHistoryCopy[idx];
+    const isComplete = entry.items?.bag && entry.items?.uniforms && entry.items?.books;
+    const nextItems = isComplete
+      ? { bag: false, uniforms: false, books: false }
+      : { bag: true, uniforms: true, books: true };
+    packHistoryCopy[idx] = { ...entry, items: nextItems };
+    const updatedStudent = { ...student, packHistory: packHistoryCopy };
+    updateStudent(student.id, updatedStudent, () => {
+      showToast(isComplete ? `Year ${targetYear}: status changed to pending` : `Year ${targetYear}: status changed to complete`);
+    });
+  };
+
   const handleDelete = () => {
     const confirmed = window.confirm(`Delete ${student.name}? This action cannot be undone.`);
     if (!confirmed) return;
@@ -277,7 +293,7 @@ function StudentDetail({ studentId, onBack }) {
                           type="button"
                           className={`badge ${entryBadgeClass}`}
                           style={{ border: 'none', cursor: 'pointer' }}
-                          onClick={handleToggleStatus}
+                          onClick={() => handleToggleYearStatus(entry.year)}
                         >
                           {entryBadgeText}
                         </button>
@@ -321,7 +337,7 @@ function AppContent() {
       case 'students': return <Students onViewDetail={openStudentDetail} />;
       case 'register': return <Register />;
       case 'settings': return <Settings />;
-      default: return <Dashboard />;
+      default: return <Dashboard onViewDetail={openStudentDetail} />;
     }
   };
 

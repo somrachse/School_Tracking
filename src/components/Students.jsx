@@ -170,7 +170,7 @@ export default function Students({ onViewDetail }) {
       search &&
       !s.name.toLowerCase().includes(search.toLowerCase()) &&
       !(s.phone || '').includes(search) &&
-      !(s.student_id || formatStudentCode(s.id)).toLowerCase().includes(search.toLowerCase())
+      !(s.studentCode || formatStudentCode(s.id)).toLowerCase().includes(search.toLowerCase())
     ) return false;
     if (filterChurch && s.church !== filterChurch) return false;
     if (filterLvl && getLevel(s.grade) !== filterLvl) return false;
@@ -664,30 +664,32 @@ export default function Students({ onViewDetail }) {
         </div>
       </div>
       
-      <div className="no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
-        <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+      <div className="no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '16px', alignItems: 'center' }}>
+        <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
           <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--fg3)', fontSize: '13px' }}></i>
-          <input type="text" className="input-field" style={{ paddingLeft: '36px' }} placeholder="Search by name or phone..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input type="text" className="input-field" style={{ paddingLeft: '36px' }} placeholder="Search name, phone, or ID..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <select className="input-field" style={{ width: 'auto', minWidth: '130px' }} value={filterChurch} onChange={e => setFilterChurch(e.target.value)}>
-          <option value="">All Churches</option>
-          {settings.churches.map(church => <option key={church} value={church}>{church}</option>)}
-        </select>
-        <select className="input-field" style={{ width: 'auto', minWidth: '130px' }} value={filterLvl} onChange={e => setFilterLvl(e.target.value)}>
-          <option value="">All Levels</option><option value="primary">Primary (1-6)</option><option value="high">High School (7-12)</option>
-        </select>
-        <select className="input-field" style={{ width: 'auto', minWidth: '110px' }} value={filterGen} onChange={e => setFilterGen(e.target.value)}>
-          <option value="">All Genders</option><option value="Male">Male</option><option value="Female">Female</option>
-        </select>
-        <select className="input-field" style={{ width: 'auto', minWidth: '130px' }} value={filterPackYear} onChange={e => setFilterPackYear(e.target.value)}>
-          <option value="">All Pack Years</option>
-          {packYears.map(year => <option key={year} value={year}>{year}</option>)}
-        </select>
-        <select className="input-field" style={{ width: 'auto', minWidth: '140px' }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
-          <option value="">Sort</option>
-          <option value="az">A - Z</option>
-          <option value="za">Z - A</option>
-        </select>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <select className="input-field" style={{ width: 'auto', minWidth: '130px' }} value={filterChurch} onChange={e => setFilterChurch(e.target.value)}>
+            <option value="">All Churches</option>
+            {settings.churches.map(church => <option key={church} value={church}>{church}</option>)}
+          </select>
+          <select className="input-field" style={{ width: 'auto', minWidth: '130px' }} value={filterLvl} onChange={e => setFilterLvl(e.target.value)}>
+            <option value="">All Levels</option><option value="primary">Primary (1-6)</option><option value="high">High School (7-12)</option>
+          </select>
+          <select className="input-field" style={{ width: 'auto', minWidth: '110px' }} value={filterGen} onChange={e => setFilterGen(e.target.value)}>
+            <option value="">All Genders</option><option value="Male">Male</option><option value="Female">Female</option>
+          </select>
+          <select className="input-field" style={{ width: 'auto', minWidth: '130px' }} value={filterPackYear} onChange={e => setFilterPackYear(e.target.value)}>
+            <option value="">All Pack Years</option>
+            {packYears.map(year => <option key={year} value={year}>{year}</option>)}
+          </select>
+          {(search || filterChurch || filterLvl || filterGen || filterPackYear) && (
+            <button className="btn btn-secondary btn-sm" onClick={() => { setSearch(''); setFilterChurch(''); setFilterLvl(''); setFilterGen(''); setFilterPackYear(''); }}>
+              <i className="fas fa-times"></i> Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {selectedVisibleIds.length > 0 ? (

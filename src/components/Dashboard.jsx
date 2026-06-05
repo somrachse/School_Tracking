@@ -1,4 +1,4 @@
-import { useApp, calcAge, getLevel, packStatus, completeDistributions, totalDistributions } from '../AppContext';
+import { useApp, getLevel, packStatus, completeDistributions, totalDistributions } from '../AppContext';
 
 export default function Dashboard({ onViewDetail }) {
   const { students, settings } = useApp();
@@ -82,13 +82,13 @@ export default function Dashboard({ onViewDetail }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: '14px', marginBottom: '24px' }}>
         <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Total Students</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', marginTop: '4px' }}>{total}</div></div>
         <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Male</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--info)', marginTop: '4px' }}>{maleCount}</div></div>
-        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Female</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--accent)', marginTop: '4px' }}>{femaleCount}</div></div>
+        <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Female</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--accent)', marginTop: '4px' }}>{femaleCount}</div></div>
         <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Primary</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', marginTop: '4px' }}>{primary}</div></div>
         <div className="card stat-card amber"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>High School</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--warn)', marginTop: '4px' }}>{high}</div></div>
-        <div className="card stat-card green"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Packs Given</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--accent)', marginTop: '4px' }}>{comp}</div><div style={{ fontSize: '10px', color: 'var(--fg3)', marginTop: '2px' }}>{dist} total distributions</div></div>
+        <div className="card stat-card blue"><div style={{ fontSize: '11px', color: 'var(--fg3)', fontWeight: 600, textTransform: 'uppercase' }}>Packs Given</div><div style={{ fontSize: '32px', fontWeight: 700, fontFamily: 'Kantumruy', color: 'var(--accent)', marginTop: '4px' }}>{comp}</div><div style={{ fontSize: '10px', color: 'var(--fg3)', marginTop: '2px' }}>{dist} total distributions</div></div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
         <div className="card"><h3 style={{ fontSize: '15px', marginBottom: '16px' }}>Church Breakdown</h3>
           {Object.entries(churchCounts).sort((a,b) => b[1]-a[1]).map(([n, c]) => (
             <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
