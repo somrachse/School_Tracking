@@ -134,7 +134,7 @@ export default function Register() {
     const matchedStudent = students.find((student) => student.name.trim().toLowerCase() === normalizedLookup);
     if (!matchedStudent) return;
 
-    const suggestedYear = Math.max(currentYear, (matchedStudent.packYear || currentYear) + 1);
+    const suggestedYear = Math.max(currentYear, (Number(matchedStudent.packYear) || currentYear) + 1);
     setSelectedExistingId(matchedStudent.id);
     setForm(buildFormFromStudent(matchedStudent, suggestedYear));
     setCurrentPhoto(matchedStudent.photo || '');
@@ -186,6 +186,11 @@ export default function Register() {
       showToast('Pack year is invalid', 'error');
       return;
     }
+    const parsedGrade = parseInt(form.grade, 10);
+    if (Number.isNaN(parsedGrade)) {
+      showToast('Please select a valid grade', 'error');
+      return;
+    }
 
     if (editingId) {
       const student = students.find((item) => item.id === editingId);
@@ -197,7 +202,7 @@ export default function Register() {
       const payload = {
         ...student,
         ...form,
-        grade: parseInt(form.grade, 10),
+        grade: parsedGrade,
         packYear: parsedPackYear,
         photo: currentPhoto,
         documents: currentDocs,
@@ -219,7 +224,7 @@ export default function Register() {
       const payload = {
         ...student,
         ...form,
-        grade: parseInt(form.grade, 10),
+        grade: parsedGrade,
         packYear: parsedPackYear,
         photo: currentPhoto,
         documents: currentDocs,
@@ -235,7 +240,7 @@ export default function Register() {
       });
     } else {
       const newStudent = {
-        ...form, grade: parseInt(form.grade, 10), packYear: parsedPackYear, photo: currentPhoto, documents: currentDocs,
+        ...form, grade: parsedGrade, packYear: parsedPackYear, photo: currentPhoto, documents: currentDocs,
         packHistory: [{ year: parsedPackYear, items: { bag: false, uniforms: false, books: false } }],
       };
 
@@ -323,7 +328,7 @@ export default function Register() {
         </div>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-          <div><label className="field-label">ថ្នាក់ *</label><select className="input-field" required value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}><option value=""></option>{Array.from({length: 12}, (_, i) => i + 1).map(g => <option key={g} value={g}>Grade {g}</option>)}</select></div>
+          <div><label className="field-label">ថ្នាក់ *</label><select className="input-field" required value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}><option value=""></option>{Array.from({length: 12}, (_, i) => i + 1).map(g => <option key={g} value={g}>ថ្នាក់{g}</option>)}</select></div>
           <div><label className="field-label">សាលារៀន *</label><input type="text" className="input-field" required value={form.school} onChange={e => setForm({...form, school: e.target.value})} /></div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
